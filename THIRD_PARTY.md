@@ -7,6 +7,7 @@ Planned libraries and their licenses. Verify each license when you install the p
 | FastAPI | Backend framework | MIT |
 | Uvicorn | ASGI server | BSD-3-Clause |
 | Pydantic v2 | Data validation | MIT |
+| pydantic-settings | Environment and settings management | MIT |
 | httpx | HTTP client | BSD-3-Clause |
 | python-dotenv | Loading .env | BSD-3-Clause |
 | pytest | Backend tests | MIT |
