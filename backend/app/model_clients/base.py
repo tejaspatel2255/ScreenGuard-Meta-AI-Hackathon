@@ -94,6 +94,15 @@ class ModelClient(ABC):
         """Generates an exportable document from procedure and trace."""
         pass
 
+    def usage(self) -> Dict[str, Any]:
+        """Returns spend and call statistics."""
+        return {
+            "calls_total": 0,
+            "calls_this_minute": 0,
+            "estimated_spend_usd": 0.0,
+            "spend_limit_usd": 100.0,
+        }
+
     @staticmethod
     def hash_inputs(*args: Any) -> str:
         """Deterministic sha256 hash helper for caching."""

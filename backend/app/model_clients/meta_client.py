@@ -387,3 +387,11 @@ class MetaModelClient(ModelClient):
             format_type="markdown",
             source="real",
         )
+
+    def usage(self) -> Dict[str, Any]:
+        return {
+            "calls_total": self.call_count_session,
+            "calls_this_minute": len(self.calls_in_current_minute),
+            "estimated_spend_usd": round(self.spend_guard.total_estimated_spend_usd, 4),
+            "spend_limit_usd": self.spend_guard.max_spend_usd,
+        }

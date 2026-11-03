@@ -92,12 +92,16 @@ class StepEngine:
         # 1. Skip detection: if observed_step_ids contains a step with higher order than current
         observed_steps = [self.step_map[sid] for sid in verdict.observed_step_ids if sid in self.step_map]
         higher_observed = [s for s in observed_steps if s.order > cur.order]
+        cur_observed_and_done = (cur.id in verdict.observed_step_ids) and (verdict.status == "done")
 
         if higher_observed:
-            # Mark every earlier not-done step as skipped
             highest_order = max(s.order for s in higher_observed)
+            # If current step itself was observed and completed, it is not skipped.
+            # Only intermediate steps between cur.order and highest_order are skipped.
+            min_skip_order = (cur.order + 1) if cur_observed_and_done else cur.order
+
             for s in self.steps:
-                if s.order < highest_order and self.states.get(s.id) not in ("done", "skipped"):
+                if min_skip_order <= s.order < highest_order and self.states.get(s.id) not in ("done", "skipped"):
                     self.states[s.id] = "skipped"
                     evt = Event(
                         ts=now,
@@ -108,7 +112,7 @@ class StepEngine:
                     new_events.append(evt)
                     self.events.append(evt)
 
-            # Re-evaluate current step after skipping
+            # Re-evaluate current step after skipping if cur itself was skipped
             cur = self.current_step
             if not cur:
                 return new_events

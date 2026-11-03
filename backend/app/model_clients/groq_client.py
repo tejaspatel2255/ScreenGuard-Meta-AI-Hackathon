@@ -175,7 +175,10 @@ class GroqModelClient(ModelClient):
             expected_elements=", ".join(step.expected_elements),
             success_condition=step.success_condition,
             forbidden_actions=", ".join(step.forbidden_actions),
-            context=json.dumps(context),
+            risk=step.risk,
+            completed=json.dumps(context.get("completed", [])),
+            all_steps=json.dumps(context.get("all_steps", [])),
+            recent_decisions=json.dumps(context.get("recent_decisions", [])),
         )
 
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
@@ -240,3 +243,11 @@ class GroqModelClient(ModelClient):
         data = await self._post_with_retry("/chat/completions", payload)
         content = data["choices"][0]["message"]["content"]
         return ExportResult(formatted_document=content, format_type="markdown", source="real")
+
+    def usage(self) -> Dict[str, Any]:
+        return {
+            "calls_total": self.call_count_session,
+            "calls_this_minute": len(self.calls_in_current_minute),
+            "estimated_spend_usd": round(self.spend_guard.total_estimated_spend_usd, 4),
+            "spend_limit_usd": self.spend_guard.max_spend_usd,
+        }

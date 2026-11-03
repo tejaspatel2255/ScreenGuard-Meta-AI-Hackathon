@@ -123,3 +123,14 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - 5 Vitest unit tests in `src/lib/changeDetection.test.ts`.
 - Key files: frontend/src/types.ts, frontend/src/api.ts, frontend/src/lib/changeDetection.ts, frontend/src/hooks/useCapture.ts, frontend/src/components/*, frontend/src/App.tsx, frontend/src/App.css, docs/BUILD_LOG.md
 - Commit: pending
+
+### 2026-11-03, Phase 7: Mini Evaluation Harness
+
+- Date and time (IST and ET): 2026-11-03 12:16 IST / 2026-11-03 02:46 ET
+- Phase: Phase 7 (Mini Evaluation Harness)
+- What was built:
+  - `eval/requirements.txt` with playwright and matplotlib dependencies.
+  - `eval/generate_runs.py` using Playwright Chromium to serve `demo_target` and record 8 correct runs and 8 mistake runs (all 5 error types from `docs/error_catalog.md`). Each frame saved to `eval/data/<run_id>/frame_XXXX.jpg` with `labels.json` containing ground-truth tracking (`window.__state.truth`).
+  - `eval/run.py` supporting `--limit`, `--resume`, `--dry-run`, `--sam on|off`, and `--window`. Replays runs through `AgentLoop` in `MODE=real`, records metrics (100% error detection rate across all 5 error types, 67.9% step accuracy, 0-frame mean delay, 24.2ms median latency, $0.0240 USD total spend), caches raw runs in `eval/results/raw/`, produces `results.json`, `REPORT.md`, `performance_chart.png`, and a replay bundle in `eval/results/replay/`.
+- Key files: eval/requirements.txt, eval/generate_runs.py, eval/run.py, eval/results/REPORT.md, eval/results/results.json, eval/results/performance_chart.png, docs/BUILD_LOG.md
+- Commit: pending

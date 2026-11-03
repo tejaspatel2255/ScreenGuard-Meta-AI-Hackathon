@@ -1,0 +1,89 @@
+{
+  "run_id": "mistake_05_premature_submit",
+  "is_mistake": true,
+  "error_type": "premature_submit",
+  "first_violation_frame": 3,
+  "first_warning_frame": 2,
+  "frames": [
+    {
+      "frame": "frame_0001.jpg",
+      "frame_idx": 1,
+      "truth_step": 1,
+      "agent_step": "step-1",
+      "action": "WAIT",
+      "reason": "User is actively working on the step.",
+      "warning": null,
+      "blocking": false,
+      "confidence": 0.95,
+      "latency_ms": 19.75536346435547,
+      "calls_used": 1
+    },
+    {
+      "frame": "frame_0002.jpg",
+      "frame_idx": 2,
+      "truth_step": 5,
+      "agent_step": "step-4",
+      "action": "WARN",
+      "reason": "Out-of-order action detected: Step skipped because evidence appeared for later step order 3",
+      "warning": "Step was skipped: Step skipped because evidence appeared for later step order 3",
+      "blocking": false,
+      "confidence": 1.0,
+      "latency_ms": 21.58045768737793,
+      "calls_used": 1
+    },
+    {
+      "frame": "frame_0003.jpg",
+      "frame_idx": 3,
+      "truth_step": 11,
+      "agent_step": null,
+      "action": "STOP",
+      "reason": "Critical high-risk step was skipped: step-4",
+      "warning": "Step was skipped: Step skipped because evidence appeared for later step order 10",
+      "blocking": true,
+      "confidence": 1.0,
+      "latency_ms": 27909.914255142212,
+      "calls_used": 1
+    }
+  ],
+  "trace": [
+    {
+      "id": "trc-570df782",
+      "ts": 1793689393.6608913,
+      "action": "WAIT",
+      "reason": "User is actively working on the step.",
+      "step_id": "step-1",
+      "status": "in_progress",
+      "confidence": 0.95,
+      "evidence": "The 'Sign In to Acme Admin' form is visible. The username field contains 'demo@acme.com' and the password field contains masked characters. The 'Sign in' button is visible but the header still shows 'Not logged in', indicating the action has not been completed.",
+      "warning": null,
+      "calls_used": 1,
+      "latency_ms": 19.75536346435547
+    },
+    {
+      "id": "trc-03919dc1",
+      "ts": 1793689393.6837676,
+      "action": "WARN",
+      "reason": "Out-of-order action detected: Step skipped because evidence appeared for later step order 3",
+      "step_id": "step-1",
+      "status": "done",
+      "confidence": 1.0,
+      "evidence": "The UI displays 'Logged in: demo@acme.com' in the top right corner, confirming the user has successfully signed in. The screen currently shows the 'Process Customer Refund (ORD-1002)' page.",
+      "warning": "Step was skipped: Step skipped because evidence appeared for later step order 3",
+      "calls_used": 1,
+      "latency_ms": 21.58045768737793
+    },
+    {
+      "id": "trc-9fbc6870",
+      "ts": 1793689421.595344,
+      "action": "STOP",
+      "reason": "Critical high-risk step was skipped: step-4",
+      "step_id": "step-4",
+      "status": "done",
+      "confidence": 1.0,
+      "evidence": "The screen displays a 'Refund issued successfully!' confirmation message with a transaction reference and amount, indicating the entire refund procedure has been completed.",
+      "warning": "Step was skipped: Step skipped because evidence appeared for later step order 10",
+      "calls_used": 1,
+      "latency_ms": 27909.914255142212
+    }
+  ]
+}

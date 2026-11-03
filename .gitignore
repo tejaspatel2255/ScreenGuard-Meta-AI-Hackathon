@@ -30,6 +30,7 @@ backend/.cache/
 
 # Evaluation raw screenshots (results and reports ARE committed)
 eval/data/
+eval/.mplconfig/
 
 cache/
 *.zip

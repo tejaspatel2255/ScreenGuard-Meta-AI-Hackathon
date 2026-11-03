@@ -1,0 +1,34 @@
+{
+  "runs_evaluated": 16,
+  "correct_runs": 8,
+  "mistake_runs": 8,
+  "error_detection_rate_pct": 100.0,
+  "mean_detection_delay_frames": 0.0,
+  "false_alarms_per_correct_run": 3.0,
+  "step_tracking_accuracy_pct": 67.9,
+  "median_latency_ms": 24.2,
+  "total_calls": 80,
+  "total_spend_usd": 0.024,
+  "error_type_breakdown": {
+    "skipped_step": {
+      "total": 2,
+      "detected": 2
+    },
+    "wrong_order": {
+      "total": 2,
+      "detected": 2
+    },
+    "wrong_value": {
+      "total": 2,
+      "detected": 2
+    },
+    "wrong_control": {
+      "total": 1,
+      "detected": 1
+    },
+    "premature_submit": {
+      "total": 1,
+      "detected": 1
+    }
+  }
+}
