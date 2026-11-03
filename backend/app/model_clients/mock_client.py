@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List
 from backend.app.model_clients.base import (
     BoundingBox,
@@ -21,40 +22,58 @@ class MockModelClient(ModelClient):
         pass
 
     async def parse_procedure(self, text: str) -> ProcedureParseResult:
-        steps: List[ProcedureStep] = [
-            ProcedureStep(
-                id="step-1",
-                order=1,
-                instruction="Open the customer refund screen",
-                expected_elements=["Refunds Button", "Customer Search Field"],
-                success_condition="Refund interface is displayed",
-                forbidden_actions=["Click Cancel Transaction"],
-                depends_on=[],
-                risk="low",
-            ),
-            ProcedureStep(
-                id="step-2",
-                order=2,
-                instruction="Enter the customer order number and verify details",
-                expected_elements=["Order ID Input", "Verify Button"],
-                success_condition="Customer order details populated",
-                forbidden_actions=["Enter test order ID"],
-                depends_on=["step-1"],
-                risk="low",
-            ),
-            ProcedureStep(
-                id="step-3",
-                order=3,
-                instruction="Confirm refund amount and authorize payment",
-                expected_elements=["Confirm Refund Button", "Manager Authorization Key"],
-                success_condition="Success confirmation modal appears",
-                forbidden_actions=["Override safety cap without manager approval"],
-                depends_on=["step-2"],
-                risk="high",
-            ),
-        ]
+        """Parses procedure text deterministically instead of ignoring it."""
+        lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
+        steps: List[ProcedureStep] = []
+        order = 1
+
+        for line in lines:
+            # Check for numbered list items like "1. Do something" or "- Do something"
+            cleaned = re.sub(r"^(\d+[\.\)]|\-|\*)\s*", "", line)
+            if not cleaned:
+                continue
+
+            # Infer risk and elements simply
+            is_high_risk = any(kw in cleaned.lower() for kw in ["confirm", "authorize", "submit", "delete", "override", "manager"])
+            
+            # Simple keyword extraction for expected elements
+            words = [w.strip(",.()") for w in cleaned.split() if len(w) > 3 and w[0].isupper()]
+            expected = words[:3] if words else ["Action Button"]
+
+            steps.append(
+                ProcedureStep(
+                    id=f"step-{order}",
+                    order=order,
+                    instruction=cleaned,
+                    expected_elements=expected,
+                    success_condition=f"Visible UI state confirming completion of: {cleaned}",
+                    forbidden_actions=["Do not perform unauthorized steps"],
+                    depends_on=[f"step-{order-1}"] if order > 1 else [],
+                    risk="high" if is_high_risk else "low",
+                )
+            )
+            order += 1
+
+        if not steps:
+            steps.append(
+                ProcedureStep(
+                    id="step-1",
+                    order=1,
+                    instruction="Open procedure screen",
+                    expected_elements=["Screen"],
+                    success_condition="Screen loaded",
+                    risk="low",
+                )
+            )
+
+        title = "Parsed Procedure"
+        if lines:
+            first_line = lines[0]
+            if not re.match(r"^(\d+[\.\)]|\-|\*)", first_line):
+                title = first_line
+
         return ProcedureParseResult(
-            title="Mock Customer Refund Procedure",
+            title=title,
             steps=steps,
             source="mock",
             confidence=1.0,
@@ -66,7 +85,6 @@ class MockModelClient(ModelClient):
         step: ProcedureStep,
         context: Dict[str, Any],
     ) -> VerdictResult:
-        # Predictable mock verdict: if step is step-3 return high confidence done
         return VerdictResult(
             step_id=step.id,
             status="done",
@@ -83,7 +101,6 @@ class MockModelClient(ModelClient):
         prompts: List[str],
     ) -> LocateElementsResult:
         elements: List[BoundingBox] = []
-        # Return mock normalized boxes [ymin, xmin, ymax, xmax]
         for i, prompt in enumerate(prompts):
             offset = i * 0.1
             elements.append(

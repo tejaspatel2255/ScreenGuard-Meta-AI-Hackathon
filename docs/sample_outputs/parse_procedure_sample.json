@@ -1,17 +1,17 @@
 {
-  "title": "Mock Customer Refund Procedure",
+  "title": "Parsed Procedure",
   "steps": [
     {
       "id": "step-1",
       "order": 1,
-      "instruction": "Open the customer refund screen",
+      "instruction": "Click the New Refund button.",
       "expected_elements": [
-        "Refunds Button",
-        "Customer Search Field"
+        "Click",
+        "Refund"
       ],
-      "success_condition": "Refund interface is displayed",
+      "success_condition": "Visible UI state confirming completion of: Click the New Refund button.",
       "forbidden_actions": [
-        "Click Cancel Transaction"
+        "Do not perform unauthorized steps"
       ],
       "depends_on": [],
       "risk": "low"
@@ -19,14 +19,13 @@
     {
       "id": "step-2",
       "order": 2,
-      "instruction": "Enter the customer order number and verify details",
+      "instruction": "Enter customer transaction ID and verify details.",
       "expected_elements": [
-        "Order ID Input",
-        "Verify Button"
+        "Enter"
       ],
-      "success_condition": "Customer order details populated",
+      "success_condition": "Visible UI state confirming completion of: Enter customer transaction ID and verify details.",
       "forbidden_actions": [
-        "Enter test order ID"
+        "Do not perform unauthorized steps"
       ],
       "depends_on": [
         "step-1"
@@ -36,19 +35,20 @@
     {
       "id": "step-3",
       "order": 3,
-      "instruction": "Confirm refund amount and authorize payment",
+      "instruction": "Click Issue Refund.",
       "expected_elements": [
-        "Confirm Refund Button",
-        "Manager Authorization Key"
+        "Click",
+        "Issue",
+        "Refund"
       ],
-      "success_condition": "Success confirmation modal appears",
+      "success_condition": "Visible UI state confirming completion of: Click Issue Refund.",
       "forbidden_actions": [
-        "Override safety cap without manager approval"
+        "Do not perform unauthorized steps"
       ],
       "depends_on": [
         "step-2"
       ],
-      "risk": "high"
+      "risk": "low"
     }
   ],
   "source": "mock",

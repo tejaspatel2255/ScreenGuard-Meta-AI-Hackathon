@@ -30,3 +30,6 @@ backend/.cache/
 
 # Evaluation raw screenshots (results and reports ARE committed)
 eval/data/
+
+cache/
+*.zip

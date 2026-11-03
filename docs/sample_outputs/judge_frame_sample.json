@@ -4,7 +4,7 @@
   "observed_step_ids": [
     "step-1"
   ],
-  "evidence": "Mock evaluation observed UI fulfilling 'Open the customer refund screen'.",
+  "evidence": "Mock evaluation observed UI fulfilling 'Click the New Refund button.'.",
   "warning_text": null,
   "confidence": 0.95,
   "source": "mock"

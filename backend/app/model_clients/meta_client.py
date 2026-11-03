@@ -51,20 +51,26 @@ class MetaModelClient(ModelClient):
         self.prompt_parse = parse_p_path.read_text(encoding="utf-8") if parse_p_path.exists() else ""
         self.prompt_judge = judge_p_path.read_text(encoding="utf-8") if judge_p_path.exists() else ""
 
-    def _enforce_limits(self) -> None:
-        """Enforces MAX_CALLS_PER_SESSION and MAX_CALLS_PER_MINUTE."""
+    async def _enforce_limits(self) -> None:
+        """Enforces MAX_CALLS_PER_SESSION and MAX_CALLS_PER_MINUTE asynchronously with re-check."""
         if self.call_count_session >= settings.MAX_CALLS_PER_SESSION:
             raise RuntimeError(
                 f"MAX_CALLS_PER_SESSION ({settings.MAX_CALLS_PER_SESSION}) reached. Refusing calls."
             )
 
-        now = time.time()
-        self.calls_in_current_minute = [t for t in self.calls_in_current_minute if now - t < 60.0]
-        if len(self.calls_in_current_minute) >= settings.MAX_CALLS_PER_MINUTE:
-            sleep_duration = 60.0 - (now - self.calls_in_current_minute[0])
-            if sleep_duration > 0:
-                logger.warning("Per-minute call limit (%d) hit. Throttling for %.2fs", settings.MAX_CALLS_PER_MINUTE, sleep_duration)
-                time.sleep(min(sleep_duration, 5.0))
+        while True:
+            now = time.time()
+            self.calls_in_current_minute = [t for t in self.calls_in_current_minute if now - t < 60.0]
+            if len(self.calls_in_current_minute) < settings.MAX_CALLS_PER_MINUTE:
+                break
+
+            sleep_duration = 60.0 - (now - self.calls_in_current_minute[0]) + 0.1
+            logger.warning(
+                "Per-minute call limit (%d) reached. Asynchronously waiting for %.2fs",
+                settings.MAX_CALLS_PER_MINUTE,
+                sleep_duration,
+            )
+            await asyncio.sleep(max(0.1, min(sleep_duration, 5.0)))
 
     def _record_call(self) -> None:
         self.call_count_session += 1
@@ -89,6 +95,13 @@ class MetaModelClient(ModelClient):
         except Exception as e:
             logger.warning("Failed to write cache file %s: %s", cache_file, e)
 
+    @staticmethod
+    def _detect_image_mime(image_bytes: bytes) -> str:
+        """Detects whether image is JPEG or PNG."""
+        if image_bytes.startswith(b"\xff\xd8\xff"):
+            return "image/jpeg"
+        return "image/png"
+
     async def _post_with_retry(
         self,
         endpoint: str,
@@ -97,7 +110,7 @@ class MetaModelClient(ModelClient):
         max_retries: int = 3,
     ) -> Dict[str, Any]:
         """Makes an HTTP POST with exponential backoff on 429 and 5xx."""
-        self._enforce_limits()
+        await self._enforce_limits()
         self.spend_guard.check_can_spend(0.0001)
 
         url = f"{self.base_url}{endpoint}"
@@ -106,7 +119,6 @@ class MetaModelClient(ModelClient):
             "Content-Type": "application/json",
         }
 
-        # Safe log without secret or image payload
         logger.info("Calling endpoint: %s (call #%d in session)", endpoint, self.call_count_session + 1)
 
         backoff = 1.0
@@ -120,7 +132,6 @@ class MetaModelClient(ModelClient):
                         res_json = response.json()
                         if asyncio.iscoroutine(res_json):
                             res_json = await res_json
-                        # Track token usage if present
                         usage = res_json.get("usage", {})
                         in_toks = usage.get("prompt_tokens", 0)
                         out_toks = usage.get("completion_tokens", 0)
@@ -210,6 +221,7 @@ class MetaModelClient(ModelClient):
             context=json.dumps(context),
         )
 
+        mime_type = self._detect_image_mime(image_bytes)
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
         messages = [
             {
@@ -218,7 +230,7 @@ class MetaModelClient(ModelClient):
                     {"type": "text", "text": prompt},
                     {
                         "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{b64_image}"},
+                        "image_url": {"url": f"data:{mime_type};base64,{b64_image}"},
                     },
                 ],
             }
@@ -249,7 +261,6 @@ class MetaModelClient(ModelClient):
             except Exception as e:
                 logger.warning("judge_frame retry %d failed: %s", retry, e)
                 if retry == 1:
-                    # Return uncertain on malformed or failed response per PROJECT_RULES rule 6
                     return VerdictResult(
                         step_id=step.id,
                         status="uncertain",
@@ -270,17 +281,16 @@ class MetaModelClient(ModelClient):
         if cached:
             return LocateElementsResult.model_validate(cached)
 
-        # SAM 3.1 endpoint
+        mime_type = self._detect_image_mime(image_bytes)
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
         payload = {
             "model": "sam-3.1",
-            "image": f"data:image/png;base64,{b64_image}",
+            "image": f"data:{mime_type};base64,{b64_image}",
             "prompts": prompts,
         }
 
         try:
             data = await self._post_with_retry("/segmentation", payload)
-            # Estimate SAM cost per image
             sam_cost = self.spend_guard.estimate_sam_cost(1)
             self.spend_guard.record_spend(sam_cost)
 
@@ -306,7 +316,7 @@ class MetaModelClient(ModelClient):
         if cached:
             return TranscriptionResult.model_validate(cached)
 
-        self._enforce_limits()
+        await self._enforce_limits()
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         payload = {
             "model": "muse-voice-transcribe-1.0",

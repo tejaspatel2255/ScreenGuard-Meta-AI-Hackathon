@@ -40,7 +40,8 @@ def test_mock_client_contracts():
     # generate_export
     export = asyncio.run(client.generate_export(parsed))
     assert export.source == "mock"
-    assert "Mock Customer Refund Procedure" in export.formatted_document
+    assert "Test procedure instruction" in export.formatted_document
+    assert "(Export)" in export.formatted_document
 
 
 def test_spend_guard_hard_stop():
