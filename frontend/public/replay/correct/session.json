@@ -1,0 +1,93 @@
+[
+  {
+    "frame": "frame_0001.jpg",
+    "frame_idx": 1,
+    "truth_step": 1,
+    "agent_step": "step-1",
+    "action": "WAIT",
+    "reason": "User is actively working on the step.",
+    "warning": null,
+    "blocking": false,
+    "confidence": 0.95,
+    "latency_ms": 1702.7840614318848,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0002.jpg",
+    "frame_idx": 2,
+    "truth_step": 2,
+    "agent_step": "step-2",
+    "action": "ADVANCE",
+    "reason": "Step 'Sign in with the demo username and password.' confirmed with confidence 1.00 >= 0.70",
+    "warning": null,
+    "blocking": false,
+    "confidence": 1.0,
+    "latency_ms": 1604.7947406768799,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0003.jpg",
+    "frame_idx": 3,
+    "truth_step": 4,
+    "agent_step": "step-4",
+    "action": "WARN",
+    "reason": "Out-of-order action detected: Step skipped because evidence appeared for later step order 3",
+    "warning": "Step was skipped: Step skipped because evidence appeared for later step order 3",
+    "blocking": false,
+    "confidence": 1.0,
+    "latency_ms": 27899.85704421997,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0004.jpg",
+    "frame_idx": 4,
+    "truth_step": 5,
+    "agent_step": "step-5",
+    "action": "ADVANCE",
+    "reason": "Step 'Click Start refund.' confirmed with confidence 1.00 >= 0.85",
+    "warning": null,
+    "blocking": false,
+    "confidence": 1.0,
+    "latency_ms": 27787.66179084778,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0005.jpg",
+    "frame_idx": 5,
+    "truth_step": 5,
+    "agent_step": "step-8",
+    "action": "STOP",
+    "reason": "Critical high-risk step was skipped: step-5",
+    "warning": "Step was skipped: Step skipped because evidence appeared for later step order 7",
+    "blocking": true,
+    "confidence": 1.0,
+    "latency_ms": 28098.809957504272,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0006.jpg",
+    "frame_idx": 6,
+    "truth_step": 10,
+    "agent_step": "step-10",
+    "action": "STOP",
+    "reason": "Critical high-risk step was skipped: step-8",
+    "warning": "Step was skipped: Step skipped because evidence appeared for later step order 9",
+    "blocking": true,
+    "confidence": 1.0,
+    "latency_ms": 28333.181142807007,
+    "calls_used": 1
+  },
+  {
+    "frame": "frame_0007.jpg",
+    "frame_idx": 7,
+    "truth_step": 11,
+    "agent_step": null,
+    "action": "ADVANCE",
+    "reason": "Step 'Click Confirm refund and check the success message.' confirmed with confidence 1.00 >= 0.85",
+    "warning": null,
+    "blocking": false,
+    "confidence": 1.0,
+    "latency_ms": 27933.738470077515,
+    "calls_used": 1
+  }
+]

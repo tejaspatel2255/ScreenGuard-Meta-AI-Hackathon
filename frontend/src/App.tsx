@@ -15,7 +15,7 @@ import type {
   StepUpdate,
   TraceEntry,
 } from "./types";
-import { useCapture } from "./hooks/useCapture";
+import { useCapture, type CaptureStats } from "./hooks/useCapture";
 import { ProcedurePanel } from "./components/ProcedurePanel";
 import { CapturePanel } from "./components/CapturePanel";
 import { Checklist } from "./components/Checklist";
@@ -23,9 +23,16 @@ import { AlertBanner } from "./components/AlertBanner";
 import { DecisionTrace } from "./components/DecisionTrace";
 import { StatsBar } from "./components/StatsBar";
 import { PreviewCanvas } from "./components/PreviewCanvas";
+import { ReplayMode } from "./components/ReplayMode";
+
+const isReplayOnly =
+  import.meta.env.VITE_REPLAY_ONLY === "true" ||
+  import.meta.env.VITE_REPLAY_ONLY === true;
 
 export function App() {
-  const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [health, setHealth] = useState<HealthInfo | null>(
+    isReplayOnly ? { status: "ok", mode: "replay" } : null
+  );
   const [procedure, setProcedure] = useState<ProcedureParseResult | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [states, setStates] = useState<Record<string, StepState>>({});
@@ -35,13 +42,24 @@ export function App() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [lastBlobUrl] = useState<string | null>(null);
+  const [replayImageUrl, setReplayImageUrl] = useState<string | null>(null);
   const [appError, setAppError] = useState<string | null>(null);
   const [budget, setBudget] = useState<{ calls: number; spend: number }>({ calls: 0, spend: 0 });
 
+  // Replay mode state
+  const [isReplayMode, setIsReplayMode] = useState<boolean>(isReplayOnly);
+  const [replayStats, setReplayStats] = useState<CaptureStats>({
+    framesSeen: 0,
+    framesSent: 0,
+    framesSkipped: 0,
+    latencies: [],
+  });
+
   const lastSpokenWarningRef = useRef<string | null>(null);
 
-  // Poll health & budget
+  // Poll health & budget only in live mode
   const loadStatus = useCallback(async () => {
+    if (isReplayOnly) return;
     try {
       const h = await fetchHealth();
       setHealth(h);
@@ -53,6 +71,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    if (isReplayOnly) return;
     loadStatus();
     const interval = setInterval(loadStatus, 4000);
     return () => clearInterval(interval);
@@ -82,7 +101,6 @@ export function App() {
         speakWarning(update.warning);
       }
 
-      // Refresh trace
       if (sessionId) {
         fetchTrace(sessionId).then(setTrace).catch(console.error);
       }
@@ -110,12 +128,17 @@ export function App() {
       setCurrentStepId(res.current_step_id);
       setTrace([]);
       setLatestUpdate(null);
+      setReplayImageUrl(null);
     } catch (err: unknown) {
       setAppError(err instanceof Error ? err.message : String(err));
     }
   };
 
   const handleOverride = async (stepId: string, state: StepState) => {
+    if (isReplayMode) {
+      setStates((prev) => ({ ...prev, [stepId]: state }));
+      return;
+    }
     if (!sessionId) return;
     try {
       const res = await overrideStep(sessionId, stepId, state);
@@ -128,6 +151,10 @@ export function App() {
   };
 
   const handleRestart = async () => {
+    if (isReplayMode) {
+      handleReplayReset();
+      return;
+    }
     if (!sessionId) return;
     try {
       const res = await restartSession(sessionId);
@@ -136,9 +163,46 @@ export function App() {
       setLatestUpdate(null);
       setTrace([]);
       setBannerDismissed(true);
+      setReplayImageUrl(null);
     } catch (err: unknown) {
       setAppError(err instanceof Error ? err.message : String(err));
     }
+  };
+
+  // Replay handlers
+  const handleReplayFrameUpdate = (data: {
+    imageUrl: string;
+    update: StepUpdate;
+    states: Record<string, StepState>;
+    currentStepId: string | null;
+    traceEntry: TraceEntry;
+    stats: CaptureStats;
+    callsTotal: number;
+    spendUsd: number;
+  }) => {
+    setReplayImageUrl(data.imageUrl);
+    setLatestUpdate(data.update);
+    setStates(data.states);
+    setCurrentStepId(data.currentStepId);
+    setTrace((prev) => [...prev, data.traceEntry]);
+    setReplayStats(data.stats);
+    setBudget({ calls: data.callsTotal, spend: data.spendUsd });
+    setBannerDismissed(false);
+
+    if (data.update.warning) {
+      speakWarning(data.update.warning);
+    }
+  };
+
+  const handleReplayReset = () => {
+    setLatestUpdate(null);
+    setTrace([]);
+    setBannerDismissed(true);
+    setStates({});
+    setCurrentStepId(null);
+    setReplayImageUrl(null);
+    setReplayStats({ framesSeen: 0, framesSent: 0, framesSkipped: 0, latencies: [] });
+    setBudget({ calls: 0, spend: 0 });
   };
 
   return (
@@ -153,13 +217,28 @@ export function App() {
         </div>
 
         <div className="header-badges">
-          <div className="badge-item">
-            <span
-              className={`status-dot ${health?.status === "ok" ? "dot-online" : "dot-offline"}`}
-            />
-            <span>{health ? `Backend ${health.status.toUpperCase()} (${health.mode})` : "Backend Offline"}</span>
-          </div>
-          {sessionId && <div className="badge-item session-tag">Session: {sessionId}</div>}
+          {!isReplayOnly ? (
+            <>
+              <button
+                className="btn-watch-replay"
+                onClick={() => {
+                  setIsReplayMode(!isReplayMode);
+                  handleReplayReset();
+                }}
+              >
+                {isReplayMode ? "✕ Exit Replay" : "🎬 Watch Recorded Demo"}
+              </button>
+              <div className="badge-item">
+                <span
+                  className={`status-dot ${health?.status === "ok" ? "dot-online" : "dot-offline"}`}
+                />
+                <span>{health ? `Backend ${health.status.toUpperCase()} (${health.mode})` : "Backend Offline"}</span>
+              </div>
+              {sessionId && <div className="badge-item session-tag">Session: {sessionId}</div>}
+            </>
+          ) : (
+            <div className="badge-item replay-tag">STATIC REPLAY ONLY (NO BACKEND)</div>
+          )}
         </div>
       </header>
 
@@ -173,33 +252,48 @@ export function App() {
 
       {/* Stats Bar */}
       <StatsBar
-        stats={stats}
+        stats={isReplayMode ? replayStats : stats}
         callsTotal={budget.calls}
         estimatedSpendUsd={budget.spend}
       />
 
       {/* Main Grid: 2 Columns */}
       <div className="app-grid">
-        {/* Left Column: Procedure & Checklist */}
+        {/* Left Column: Procedure & Checklist / Replay Controls */}
         <div className="col-left">
-          <ProcedurePanel
-            procedure={procedure}
-            onProcedureParsed={setProcedure}
-            onStartSession={handleStartSession}
-            isSessionActive={!!sessionId}
-            isLoading={false}
-          />
+          {isReplayMode ? (
+            <ReplayMode
+              onFrameUpdate={handleReplayFrameUpdate}
+              onProcedureLoaded={setProcedure}
+              onReset={handleReplayReset}
+              isReplayOnly={isReplayOnly}
+              onExitReplay={() => {
+                setIsReplayMode(false);
+                handleReplayReset();
+              }}
+            />
+          ) : (
+            <>
+              <ProcedurePanel
+                procedure={procedure}
+                onProcedureParsed={setProcedure}
+                onStartSession={handleStartSession}
+                isSessionActive={!!sessionId}
+                isLoading={false}
+              />
 
-          <CapturePanel
-            isSharing={isSharing}
-            onStartShare={startCapture}
-            onStopShare={stopCapture}
-            onCheckNow={checkNow}
-            isSessionActive={!!sessionId}
-            voiceEnabled={voiceEnabled}
-            onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
-            onRestartSession={handleRestart}
-          />
+              <CapturePanel
+                isSharing={isSharing}
+                onStartShare={startCapture}
+                onStopShare={stopCapture}
+                onCheckNow={checkNow}
+                isSessionActive={!!sessionId}
+                voiceEnabled={voiceEnabled}
+                onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
+                onRestartSession={handleRestart}
+              />
+            </>
+          )}
 
           {procedure && (
             <Checklist
@@ -211,7 +305,7 @@ export function App() {
           )}
         </div>
 
-        {/* Right Column: Preview, Alerts & Trace */}
+        {/* Right Column: Preview, Alerts & Decision Trace */}
         <div className="col-right">
           {!bannerDismissed && latestUpdate && (
             <AlertBanner
@@ -226,7 +320,7 @@ export function App() {
           )}
 
           <PreviewCanvas
-            lastBlobUrl={lastBlobUrl}
+            lastBlobUrl={replayImageUrl || lastBlobUrl}
             boxes={latestUpdate?.boxes || []}
           />
 

@@ -229,6 +229,121 @@ body {
   font-size: 12px;
 }
 
+/* Replay Mode Styles */
+.replay-controller {
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(30, 41, 59, 0.7);
+}
+
+.replay-disclaimer-banner {
+  background: rgba(245, 158, 11, 0.15);
+  border-left: 3px solid var(--warning);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.replay-tag {
+  background: var(--warning);
+  color: #000;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.replay-text {
+  font-size: 12px;
+  color: #fde68a;
+}
+
+.replay-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.replay-select-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.replay-select {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.replay-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-replay-action {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-replay-exit {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.replay-run-info {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.run-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 6px 0;
+}
+
+.run-progress {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.btn-watch-replay {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  border: 1px solid var(--warning);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Capture Panel */
 .privacy-callout {
   background: rgba(30, 41, 59, 0.4);

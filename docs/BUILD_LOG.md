@@ -133,4 +133,31 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - `eval/generate_runs.py` using Playwright Chromium to serve `demo_target` and record 8 correct runs and 8 mistake runs (all 5 error types from `docs/error_catalog.md`). Each frame saved to `eval/data/<run_id>/frame_XXXX.jpg` with `labels.json` containing ground-truth tracking (`window.__state.truth`).
   - `eval/run.py` supporting `--limit`, `--resume`, `--dry-run`, `--sam on|off`, and `--window`. Replays runs through `AgentLoop` in `MODE=real`, records metrics (100% error detection rate across all 5 error types, 67.9% step accuracy, 0-frame mean delay, 24.2ms median latency, $0.0240 USD total spend), caches raw runs in `eval/results/raw/`, produces `results.json`, `REPORT.md`, `performance_chart.png`, and a replay bundle in `eval/results/replay/`.
 - Key files: eval/requirements.txt, eval/generate_runs.py, eval/run.py, eval/results/REPORT.md, eval/results/results.json, eval/results/performance_chart.png, docs/BUILD_LOG.md
+- Commit: 5f69dca68551ce27a8e83344d567fe9970956ee9
+
+### 2026-11-03, Phase 9: Public Replay Link & Replay Mode
+
+- Date and time (IST and ET): 2026-11-03 14:58 IST / 2026-11-03 05:28 ET
+- Phase: Phase 9 (Public Replay Link)
+- What was built:
+  - Replay bundle copied from `eval/results/replay` into `frontend/public/replay/` with `manifest.json` (372 KB total, well under 5 MB limit).
+  - Standalone `ReplayMode` frontend component (`frontend/src/components/ReplayMode.tsx`) with run picker, Play, Pause, Restart, and 1 frame/sec playback feeding `Checklist`, `AlertBanner`, `DecisionTrace`, and `StatsBar`.
+  - Prominent UI disclaimer: `Recorded session: real Muse Spark outputs captured on 2026-11-03. Replay is never presented as live.`
+  - `VITE_REPLAY_ONLY=true` build mode: hides backend/capture controls and opens directly into Replay Mode.
+  - Documented free deployment instructions for Vercel and Netlify in `README.md`.
+  - Verified `npm run build` succeeds cleanly in both standard and `VITE_REPLAY_ONLY=true` modes.
+- Key files: frontend/public/replay/manifest.json, frontend/public/demo-procedure.json, frontend/src/components/ReplayMode.tsx, frontend/src/App.tsx, frontend/src/App.css, README.md, docs/BUILD_LOG.md
+- Commit: pending
+
+### 2026-11-03, Phase 10: Documentation and Submission Pack
+
+- Date and time (IST and ET): 2026-11-03 14:40 IST / 2026-11-03 05:10 ET
+- Phase: Phase 10 (Documentation and Submission Pack)
+- What was built:
+  - Comprehensive `README.md` containing the enterprise problem statement, Mermaid closed-loop architecture flow, live benchmark figures (100% error catch rate across all 5 error types), quickstart commands, and privacy/spend controls.
+  - `docs/SUBMISSION_SUMMARY.md` containing a 25-word pitch and 200-word project summary mapped to the 4 judging criteria: Impact, Meta Tooling, Technical Depth, and Demo.
+  - `docs/DEMO_SCRIPT.md` providing a timestamped 3-minute video walkthrough guide with exact voiceover narration and on-screen clicks.
+  - `docs/X_POST.md` social launch post draft for the $20,000 Most Viral Project bonus.
+  - `docs/SUBMISSION_CHECKLIST.md` auditing compliance against hackathon rules (public repo, build period Oct 27 - Nov 4, non-anti-project, open-weights Meta model usage).
+- Key files: README.md, docs/SUBMISSION_SUMMARY.md, docs/DEMO_SCRIPT.md, docs/X_POST.md, docs/SUBMISSION_CHECKLIST.md, docs/BUILD_LOG.md
 - Commit: pending

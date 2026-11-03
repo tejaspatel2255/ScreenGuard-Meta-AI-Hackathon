@@ -1,0 +1,107 @@
+{
+  "title": "Create customer refund for damaged goods",
+  "steps": [
+    {
+      "id": "step-1",
+      "order": 1,
+      "instruction": "Sign in with the demo username and password.",
+      "expected_elements": ["Sign in button", "Username field"],
+      "success_condition": "UI displays Orders Overview and logged-in user header.",
+      "forbidden_actions": ["Do not proceed without valid credentials"],
+      "depends_on": [],
+      "risk": "low"
+    },
+    {
+      "id": "step-2",
+      "order": 2,
+      "instruction": "On the Orders page, open order ORD-1002.",
+      "expected_elements": ["Order ORD-1002 link"],
+      "success_condition": "UI displays Order Detail for ORD-1002.",
+      "forbidden_actions": ["Do not open wrong order"],
+      "depends_on": ["step-1"],
+      "risk": "low"
+    },
+    {
+      "id": "step-3",
+      "order": 3,
+      "instruction": "Check that the order total is $240.00.",
+      "expected_elements": ["Total $240.00"],
+      "success_condition": "Order total reflects $240.00.",
+      "forbidden_actions": [],
+      "depends_on": ["step-2"],
+      "risk": "low"
+    },
+    {
+      "id": "step-4",
+      "order": 4,
+      "instruction": "Click Start refund.",
+      "expected_elements": ["Start refund button"],
+      "success_condition": "Process Customer Refund form is open.",
+      "forbidden_actions": ["Do not skip to review without opening refund form"],
+      "depends_on": ["step-3"],
+      "risk": "low"
+    },
+    {
+      "id": "step-5",
+      "order": 5,
+      "instruction": "Choose the reason Damaged item.",
+      "expected_elements": ["Reason dropdown", "Damaged item"],
+      "success_condition": "Reason selection reflects Damaged item.",
+      "forbidden_actions": ["Do not select Wrong item or unauthorized reason"],
+      "depends_on": ["step-4"],
+      "risk": "low"
+    },
+    {
+      "id": "step-6",
+      "order": 6,
+      "instruction": "Enter the refund amount 120.00.",
+      "expected_elements": ["Refund amount field"],
+      "success_condition": "Amount field contains 120.00.",
+      "forbidden_actions": ["Do not exceed total order amount or enter invalid values"],
+      "depends_on": ["step-5"],
+      "risk": "low"
+    },
+    {
+      "id": "step-7",
+      "order": 7,
+      "instruction": "Tick Manager approved (required over $100).",
+      "expected_elements": ["Manager approved checkbox"],
+      "success_condition": "Manager approved checkbox is checked.",
+      "forbidden_actions": ["Do not submit refunds over $100 without manager approval"],
+      "depends_on": ["step-6"],
+      "risk": "high"
+    },
+    {
+      "id": "step-8",
+      "order": 8,
+      "instruction": "Click Review refund.",
+      "expected_elements": ["Review refund button"],
+      "success_condition": "Review Refund Authorization screen is displayed.",
+      "forbidden_actions": ["Do not submit without review"],
+      "depends_on": ["step-7"],
+      "risk": "low"
+    },
+    {
+      "id": "step-9",
+      "order": 9,
+      "instruction": "Check that the reason, amount and approval are correct on the review page.",
+      "expected_elements": ["Confirm refund button", "Summary details"],
+      "success_condition": "Summary displays Damaged item, $120.00, and Manager Approval YES.",
+      "forbidden_actions": [],
+      "depends_on": ["step-8"],
+      "risk": "high"
+    },
+    {
+      "id": "step-10",
+      "order": 10,
+      "instruction": "Click Confirm refund and check the success message.",
+      "expected_elements": ["Confirm refund button"],
+      "success_condition": "Success page displays 'Refund processed successfully'.",
+      "forbidden_actions": ["Do not click multiple times"],
+      "depends_on": ["step-9"],
+      "risk": "high"
+    }
+  ],
+  "source": "mock",
+  "confidence": 1.0
+}

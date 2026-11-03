@@ -127,3 +127,27 @@ async def get_budget_endpoint() -> Dict[str, Any]:
         "estimated_spend_usd": 0.0,
         "spend_limit_usd": 100.0,
     }
+
+
+@router.get("/replay/{kind}")
+async def get_replay_session(kind: str) -> List[Dict[str, Any]]:
+    if kind not in ["correct", "mistake"]:
+        raise HTTPException(status_code=400, detail="Invalid replay kind. Must be 'correct' or 'mistake'.")
+    import json
+    from pathlib import Path
+    replay_file = Path(__file__).resolve().parent.parent.parent.parent / "eval" / "results" / "replay" / kind / "session.json"
+    if not replay_file.exists():
+        raise HTTPException(status_code=404, detail=f"Replay bundle for '{kind}' not found.")
+    return json.loads(replay_file.read_text(encoding="utf-8"))
+
+
+@router.get("/replay/{kind}/{frame_name}")
+async def get_replay_frame(kind: str, frame_name: str) -> Any:
+    if kind not in ["correct", "mistake"]:
+        raise HTTPException(status_code=400, detail="Invalid replay kind. Must be 'correct' or 'mistake'.")
+    from pathlib import Path
+    from fastapi.responses import FileResponse
+    frame_path = Path(__file__).resolve().parent.parent.parent.parent / "eval" / "results" / "replay" / kind / frame_name
+    if not frame_path.exists():
+        raise HTTPException(status_code=404, detail="Frame not found.")
+    return FileResponse(str(frame_path), media_type="image/jpeg")

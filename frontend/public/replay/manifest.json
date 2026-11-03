@@ -1,0 +1,22 @@
+{
+  "captured_date": "2026-11-03",
+  "model": "Meta Muse Spark (open-weights qwen/qwen3.8-27b architecture)",
+  "runs": [
+    {
+      "id": "correct",
+      "title": "Correct Refund Flow (10 Steps)",
+      "description": "Flawless execution of customer refund ORD-1002 with manager approval verified by Muse Spark.",
+      "frame_count": 7,
+      "session_file": "/replay/correct/session.json",
+      "frame_dir": "/replay/correct"
+    },
+    {
+      "id": "mistake",
+      "title": "Mistake Run: Skipped Approval & Out-of-Order Jump",
+      "description": "Operator attempts $120.00 refund without required manager signoff; immediately halted by ScreenGuard with high-risk STOP.",
+      "frame_count": 3,
+      "session_file": "/replay/mistake/session.json",
+      "frame_dir": "/replay/mistake"
+    }
+  ]
+}

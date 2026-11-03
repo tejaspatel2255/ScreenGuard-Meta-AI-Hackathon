@@ -1,0 +1,12 @@
+Create a new customer account in Acme Admin
+
+1. Open the Acme Admin login page and sign in with the demo username and password.
+2. From the dashboard, click New customer.
+3. Type the customer's full name in the Name field.
+4. Type the customer's email address in the Email field.
+5. Choose the Business plan from the Plan dropdown.
+6. Click Next to go to the permissions page.
+7. Tick only the View orders and Create orders permissions. Leave Issue refunds unticked.
+8. Click Next to open the review page and check that the name, email, plan and permissions match.
+9. Click Submit.
+10. Confirm that the success page says the customer was created.

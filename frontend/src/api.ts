@@ -95,3 +95,9 @@ export async function fetchBudget(): Promise<BudgetInfo> {
   if (!res.ok) throw new Error(`Budget failed: ${await res.text()}`);
   return res.json();
 }
+
+export async function fetchReplay(kind: "correct" | "mistake"): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/api/replay/${kind}`);
+  if (!res.ok) throw new Error(`Replay failed: ${await res.text()}`);
+  return res.json();
+}
