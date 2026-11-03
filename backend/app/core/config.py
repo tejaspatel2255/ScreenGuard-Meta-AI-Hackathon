@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import List, Literal, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     CONFIDENCE_ADVANCE: float = 0.7
     CONFIDENCE_HIGH_RISK: float = 0.85
     WARNING_COOLDOWN_SECONDS: int = 8
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
 
 settings = Settings()

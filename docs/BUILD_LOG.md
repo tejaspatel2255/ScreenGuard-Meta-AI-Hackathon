@@ -53,3 +53,18 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Added `cache/` and `*.zip` to `.gitignore`.
 - Key files: backend/app/model_clients/groq_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/factory.py, backend/app/core/config.py, scripts/smoke_test.py, docs/sample_outputs/
 - Commit: pending
+
+### 2026-11-03, Phase 2: Parser, Step Engine, Sessions and API
+
+- Date and time (IST and ET): 2026-11-03 11:38 IST / 2026-11-03 02:08 ET
+- Phase: Phase 2 (Procedure parser, step engine, sessions, REST API)
+- What was built:
+  - `StepEngine` state machine in `backend/app/core/step_engine.py` (pure Python, injectable clock, states: pending/active/done/wrong/skipped/uncertain, skip detection on higher order evidence, confidence gating >= 0.70 / >= 0.85 high risk, 8s warning cooldown, manual override, restart).
+  - Deterministic procedure parser and service fallback in `backend/app/core/procedure_parser.py` (extracts title, quoted/capitalized elements, visual success conditions, high risk keywords, max 12 steps).
+  - Improved `parse_procedure.txt` prompt template.
+  - Thread-safe session store in `backend/app/core/session.py`.
+  - REST endpoints in `backend/app/api/routes.py`: `POST /api/procedure/parse`, `POST /api/session/start`, `GET /api/session/{id}`, `POST /api/session/{id}/override`, `POST /api/session/{id}/restart`, `GET /api/budget`.
+  - CORS origins configuration added to `config.py` and `.env.example`.
+  - 15 comprehensive unit tests in `backend/tests/test_step_engine_and_api.py`.
+- Key files: backend/app/core/step_engine.py, backend/app/core/procedure_parser.py, backend/app/core/session.py, backend/app/api/routes.py, backend/app/main.py, backend/app/core/config.py, backend/tests/test_step_engine_and_api.py, docs/BUILD_LOG.md
+- Commit: pending
