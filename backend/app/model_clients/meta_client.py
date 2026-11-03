@@ -22,6 +22,14 @@ from backend.app.model_clients.spend_guard import SpendGuard, SpendLimitReached
 
 logger = logging.getLogger("screenguard.meta_client")
 
+# Task 1d: Named constants for models and endpoints
+SPARK_MODEL = "muse-spark-1.3"
+SAM_MODEL = "sam-3.1"
+VOICE_MODEL = "muse-voice-transcribe-1.0"
+CHAT_PATH = "/chat/completions"
+SEGMENT_PATH = "/segmentation"
+VOICE_PATH = "/audio/transcriptions"
+
 
 class MetaModelClient(ModelClient):
     """Real client for Meta Model API adhering to docs/meta_api_notes.md and PROJECT_RULES.md."""
@@ -52,29 +60,47 @@ class MetaModelClient(ModelClient):
         self.prompt_judge = judge_p_path.read_text(encoding="utf-8") if judge_p_path.exists() else ""
 
     async def _enforce_limits(self) -> None:
-        """Enforces MAX_CALLS_PER_SESSION and MAX_CALLS_PER_MINUTE asynchronously with re-check."""
+        """Enforces MAX_CALLS_PER_SESSION and MAX_CALLS_PER_MINUTE asynchronously with 10s timeout."""
         if self.call_count_session >= settings.MAX_CALLS_PER_SESSION:
             raise RuntimeError(
                 f"MAX_CALLS_PER_SESSION ({settings.MAX_CALLS_PER_SESSION}) reached. Refusing calls."
             )
 
+        start_wait = time.time()
         while True:
             now = time.time()
             self.calls_in_current_minute = [t for t in self.calls_in_current_minute if now - t < 60.0]
             if len(self.calls_in_current_minute) < settings.MAX_CALLS_PER_MINUTE:
                 break
 
-            sleep_duration = 60.0 - (now - self.calls_in_current_minute[0]) + 0.1
+            waited = now - start_wait
+            if waited >= 10.0:
+                raise TimeoutError(
+                    f"Exceeded 10s wait limit waiting for per-minute rate limit ({settings.MAX_CALLS_PER_MINUTE} rpm)."
+                )
+
+            sleep_duration = min(60.0 - (now - self.calls_in_current_minute[0]) + 0.1, 10.0 - waited)
             logger.warning(
                 "Per-minute call limit (%d) reached. Asynchronously waiting for %.2fs",
                 settings.MAX_CALLS_PER_MINUTE,
                 sleep_duration,
             )
-            await asyncio.sleep(max(0.1, min(sleep_duration, 5.0)))
+            await asyncio.sleep(max(0.1, min(sleep_duration, 2.0)))
 
     def _record_call(self) -> None:
         self.call_count_session += 1
         self.calls_in_current_minute.append(time.time())
+
+    def usage(self) -> Dict[str, Any]:
+        """Returns client usage statistics."""
+        now = time.time()
+        active_minute_calls = len([t for t in self.calls_in_current_minute if now - t < 60.0])
+        return {
+            "calls_total": self.call_count_session,
+            "calls_this_minute": active_minute_calls,
+            "estimated_spend_usd": round(self.spend_guard.total_estimated_spend_usd, 6),
+            "spend_limit_usd": self.spend_guard.max_spend_usd,
+        }
 
     def _get_from_cache(self, key_hash: str) -> Optional[Dict[str, Any]]:
         cache_file = self.cache_dir / f"{key_hash}.json"
@@ -98,7 +124,7 @@ class MetaModelClient(ModelClient):
     @staticmethod
     def _detect_image_mime(image_bytes: bytes) -> str:
         """Detects whether image is JPEG or PNG."""
-        if image_bytes.startswith(b"\xff\xd8\xff"):
+        if image_bytes.startswith(b"\xff\xd8"):
             return "image/jpeg"
         return "image/png"
 
@@ -178,14 +204,14 @@ class MetaModelClient(ModelClient):
             {"role": "user", "content": f"Procedure text:\n{text}"},
         ]
         payload = {
-            "model": "muse-spark-1.3",
+            "model": SPARK_MODEL,
             "messages": messages,
             "response_format": {"type": "json_object"},
             "temperature": 0.0,
         }
 
         try:
-            data = await self._post_with_retry("/chat/completions", payload)
+            data = await self._post_with_retry(CHAT_PATH, payload)
             content = data["choices"][0]["message"]["content"]
             parsed_json = json.loads(content)
             result = ProcedureParseResult(
@@ -236,7 +262,7 @@ class MetaModelClient(ModelClient):
             }
         ]
         payload = {
-            "model": "muse-spark-1.3",
+            "model": SPARK_MODEL,
             "messages": messages,
             "response_format": {"type": "json_object"},
             "temperature": 0.0,
@@ -244,7 +270,7 @@ class MetaModelClient(ModelClient):
 
         for retry in range(2):
             try:
-                data = await self._post_with_retry("/chat/completions", payload)
+                data = await self._post_with_retry(CHAT_PATH, payload)
                 content = data["choices"][0]["message"]["content"]
                 parsed = json.loads(content)
                 result = VerdictResult(
@@ -284,13 +310,13 @@ class MetaModelClient(ModelClient):
         mime_type = self._detect_image_mime(image_bytes)
         b64_image = base64.b64encode(image_bytes).decode("utf-8")
         payload = {
-            "model": "sam-3.1",
+            "model": SAM_MODEL,
             "image": f"data:{mime_type};base64,{b64_image}",
             "prompts": prompts,
         }
 
         try:
-            data = await self._post_with_retry("/segmentation", payload)
+            data = await self._post_with_retry(SEGMENT_PATH, payload)
             sam_cost = self.spend_guard.estimate_sam_cost(1)
             self.spend_guard.record_spend(sam_cost)
 
@@ -319,11 +345,11 @@ class MetaModelClient(ModelClient):
         await self._enforce_limits()
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
         payload = {
-            "model": "muse-voice-transcribe-1.0",
+            "model": VOICE_MODEL,
             "audio": b64_audio,
         }
         try:
-            data = await self._post_with_retry("/audio/transcriptions", payload)
+            data = await self._post_with_retry(VOICE_PATH, payload)
             duration = float(data.get("duration", 5.0))
             cost = self.spend_guard.estimate_voice_cost(duration)
             self.spend_guard.record_spend(cost)
@@ -348,10 +374,10 @@ class MetaModelClient(ModelClient):
             }
         ]
         payload = {
-            "model": "muse-spark-1.3",
+            "model": SPARK_MODEL,
             "messages": messages,
         }
-        data = await self._post_with_retry("/chat/completions", payload)
+        data = await self._post_with_retry(CHAT_PATH, payload)
         content = data["choices"][0]["message"]["content"]
         return ExportResult(
             formatted_document=content,

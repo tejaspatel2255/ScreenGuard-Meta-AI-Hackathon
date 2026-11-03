@@ -2,42 +2,39 @@ import asyncio
 import json
 import pytest
 import httpx
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from backend.app.model_clients.base import ProcedureStep
 from backend.app.model_clients.mock_client import MockModelClient
 from backend.app.model_clients.meta_client import MetaModelClient
 from backend.app.model_clients.spend_guard import SpendGuard, SpendLimitReached
+from backend.app.model_clients.factory import get_model_client, reset_model_client
 
 
 def test_mock_client_contracts():
     client = MockModelClient()
 
-    # parse_procedure
     parsed = asyncio.run(client.parse_procedure("Test procedure instruction"))
     assert parsed.source == "mock"
     assert len(parsed.steps) >= 1
     assert parsed.confidence == 1.0
 
-    # judge_frame
     step = parsed.steps[0]
     verdict = asyncio.run(client.judge_frame(b"dummy_image_data", step, {}))
     assert verdict.source == "mock"
     assert verdict.status in ["done", "in_progress", "wrong", "uncertain"]
     assert 0.0 <= verdict.confidence <= 1.0
 
-    # locate_elements
     located = asyncio.run(client.locate_elements(b"dummy_image_data", ["Refund button"]))
     assert located.source == "mock"
     assert len(located.elements) == 1
     assert len(located.elements[0].box_2d) == 4
 
-    # transcribe_audio
     transcription = asyncio.run(client.transcribe_audio(b"dummy_audio_data"))
     assert transcription.source == "mock"
     assert len(transcription.text) > 0
 
-    # generate_export
     export = asyncio.run(client.generate_export(parsed))
     assert export.source == "mock"
     assert "Test procedure instruction" in export.formatted_document
@@ -46,12 +43,9 @@ def test_mock_client_contracts():
 
 def test_spend_guard_hard_stop():
     guard = SpendGuard(max_spend_usd=0.005)
-
-    # First small spend should succeed
     guard.record_spend(0.002)
     assert guard.total_estimated_spend_usd == pytest.approx(0.002)
 
-    # Exceeding spend limit must raise SpendLimitReached
     with pytest.raises(SpendLimitReached):
         guard.record_spend(0.004)
 
@@ -100,6 +94,11 @@ def test_meta_client_success_mocked_http(tmp_path):
             assert parsed.source == "real"
             assert len(parsed.steps) == 1
             assert guard.total_estimated_spend_usd > 0.0
+
+            usage = client.usage()
+            assert usage["calls_total"] == 1
+            assert usage["calls_this_minute"] == 1
+            assert usage["estimated_spend_usd"] > 0
 
     asyncio.run(_test())
 
@@ -167,3 +166,22 @@ def test_meta_client_invalid_json_graceful_degrade(tmp_path):
             assert "invalid" in verdict.evidence.lower()
 
     asyncio.run(_test())
+
+
+def test_singleton_client_and_reset():
+    reset_model_client()
+    client1 = get_model_client()
+    client2 = get_model_client()
+    assert client1 is client2
+
+    reset_model_client()
+    client3 = get_model_client()
+    assert client3 is not None
+
+
+def test_mime_type_detection():
+    jpeg_bytes = b"\xff\xd8\xff\xe0\x00\x10JFIF"
+    png_bytes = b"\x89PNG\r\n\x1a\n"
+
+    assert MetaModelClient._detect_image_mime(jpeg_bytes) == "image/jpeg"
+    assert MetaModelClient._detect_image_mime(png_bytes) == "image/png"

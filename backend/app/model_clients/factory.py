@@ -44,3 +44,11 @@ def get_model_client(force_new: bool = False) -> ModelClient:
     _client_mode = mode
     _client_provider = provider
     return _client_instance
+
+
+def reset_model_client() -> None:
+    """Resets the singleton model client instance (useful for unit tests)."""
+    global _client_instance, _client_mode, _client_provider
+    _client_instance = None
+    _client_mode = None
+    _client_provider = None
