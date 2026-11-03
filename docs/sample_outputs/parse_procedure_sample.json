@@ -1,17 +1,16 @@
 {
-  "title": "Parsed Procedure",
+  "title": "Process Refund",
   "steps": [
     {
       "id": "step-1",
       "order": 1,
-      "instruction": "Click the New Refund button.",
+      "instruction": "Click the New Refund button",
       "expected_elements": [
-        "Click",
-        "Refund"
+        "New Refund button"
       ],
-      "success_condition": "Visible UI state confirming completion of: Click the New Refund button.",
+      "success_condition": "Refund form appears on the screen",
       "forbidden_actions": [
-        "Do not perform unauthorized steps"
+        "Click Cancel button"
       ],
       "depends_on": [],
       "risk": "low"
@@ -19,13 +18,14 @@
     {
       "id": "step-2",
       "order": 2,
-      "instruction": "Enter customer transaction ID and verify details.",
+      "instruction": "Enter the customer transaction ID and verify the displayed details",
       "expected_elements": [
-        "Enter"
+        "Transaction ID input field",
+        "Transaction details section"
       ],
-      "success_condition": "Visible UI state confirming completion of: Enter customer transaction ID and verify details.",
+      "success_condition": "Details matching the entered ID are displayed",
       "forbidden_actions": [
-        "Do not perform unauthorized steps"
+        "Submit before verification"
       ],
       "depends_on": [
         "step-1"
@@ -35,22 +35,20 @@
     {
       "id": "step-3",
       "order": 3,
-      "instruction": "Click Issue Refund.",
+      "instruction": "Click the Issue Refund button",
       "expected_elements": [
-        "Click",
-        "Issue",
-        "Refund"
+        "Issue Refund button"
       ],
-      "success_condition": "Visible UI state confirming completion of: Click Issue Refund.",
+      "success_condition": "Confirmation message \"Refund issued\" appears",
       "forbidden_actions": [
-        "Do not perform unauthorized steps"
+        "Click Cancel button"
       ],
       "depends_on": [
         "step-2"
       ],
-      "risk": "low"
+      "risk": "high"
     }
   ],
-  "source": "mock",
-  "confidence": 1.0
+  "source": "real",
+  "confidence": 0.95
 }

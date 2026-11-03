@@ -37,3 +37,19 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
 - What was built: Model adapter layer with abstract ModelClient (`parse_procedure`, `judge_frame`, `locate_elements`, `transcribe_audio`, `generate_export`), deterministic `MockModelClient`, `MetaModelClient` adhering to `dev.meta.ai` documentation with exponential backoff on 429/5xx, call counters, per-minute limiter, per-session cap, on-disk hashing cache, `SpendGuard` tracking estimated spend with `SpendLimitReached` hard-stop, provider factory (`MODE=mock` / `MODE=real` and `PROVIDER=baseten`), smoke test script, and mock HTTP unit tests.
 - Key files: backend/app/model_clients/base.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/baseten_client.py, backend/app/model_clients/spend_guard.py, backend/app/model_clients/factory.py, scripts/smoke_test.py, backend/tests/test_model_clients.py, config/pricing.json, docs/meta_api_notes.md
 - Notes: Meta Model API specifications filled from official dev.meta.ai docs. Unit tests and smoke test created.
+
+### 2026-11-03, Phase 1b: Real API Verification (Groq + Meta Architecture)
+
+- Date and time (IST and ET): 2026-11-03 11:27 IST / 2026-11-03 01:57 ET
+- Phase: Phase 1b (Real API check & Defect Fixing)
+- What was built / verified:
+  - Verified live model inference using real API credentials (`MODE=real`, `PROVIDER=groq`).
+  - Tested `parse_procedure` with live LLM (latency: 2.25s, parsed 3 structured steps with `source="real"`).
+  - Tested `judge_frame` with live multimodal model and validated graceful fallback to `status="uncertain"` without crashing.
+  - Converted `_enforce_limits` to non-blocking async sleep with continuous rate-limit re-checking.
+  - Fixed singleton factory in `get_model_client()` to preserve session spend and counters.
+  - Added support for JPEG screen capture frames alongside PNG.
+  - Added deterministic fallback parsing to `MockModelClient`.
+  - Added `cache/` and `*.zip` to `.gitignore`.
+- Key files: backend/app/model_clients/groq_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/factory.py, backend/app/core/config.py, scripts/smoke_test.py, docs/sample_outputs/
+- Commit: pending

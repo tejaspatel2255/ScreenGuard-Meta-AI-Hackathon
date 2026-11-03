@@ -3,6 +3,7 @@ from typing import Optional
 from backend.app.core.config import settings
 from backend.app.model_clients.base import ModelClient
 from backend.app.model_clients.baseten_client import BasetenModelClient
+from backend.app.model_clients.groq_client import GroqModelClient
 from backend.app.model_clients.meta_client import MetaModelClient
 from backend.app.model_clients.mock_client import MockModelClient
 
@@ -27,7 +28,10 @@ def get_model_client(force_new: bool = False) -> ModelClient:
         logger.info("Initializing MockModelClient singleton (MODE=mock)")
         _client_instance = MockModelClient()
     elif mode in ["real", "replay"]:
-        if provider == "baseten":
+        if provider == "groq":
+            logger.info("Initializing GroqModelClient singleton (PROVIDER=groq, running Meta open-weights models)")
+            _client_instance = GroqModelClient()
+        elif provider == "baseten":
             logger.info("Initializing BasetenModelClient singleton (PROVIDER=baseten)")
             _client_instance = BasetenModelClient()
         else:
