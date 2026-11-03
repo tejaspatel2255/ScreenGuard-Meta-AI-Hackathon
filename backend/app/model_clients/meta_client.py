@@ -244,7 +244,10 @@ class MetaModelClient(ModelClient):
             expected_elements=", ".join(step.expected_elements),
             success_condition=step.success_condition,
             forbidden_actions=", ".join(step.forbidden_actions),
-            context=json.dumps(context),
+            risk=step.risk,
+            completed=json.dumps(context.get("completed", [])),
+            all_steps=json.dumps(context.get("all_steps", [])),
+            recent_decisions=json.dumps(context.get("recent_decisions", [])),
         )
 
         mime_type = self._detect_image_mime(image_bytes)

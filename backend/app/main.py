@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.app.api.routes import router as api_router
+from backend.app.api.frames import router as frames_router
 from backend.app.core.config import settings
 
 app = FastAPI(title="ScreenGuard Backend", version="0.1.0")
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(frames_router)
 
 
 class HealthResponse(BaseModel):

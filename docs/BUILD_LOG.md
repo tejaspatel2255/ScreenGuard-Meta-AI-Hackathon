@@ -82,3 +82,23 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - README updated with `python -m http.server 5500 --directory demo_target`.
 - Key files: demo_target/app.js, demo_target/style.css, demo_target/procedures/refund.txt, frontend/public/demo-procedure.txt, docs/error_catalog.md, README.md, docs/BUILD_LOG.md
 - Commit: pending
+
+### 2026-11-03, Phase 5: Agent Loop and Frame Processing Endpoint
+
+- Date and time (IST and ET): 2026-11-03 11:51 IST / 2026-11-03 02:21 ET
+- Phase: Phase 5 (The Agent Loop & Frame Endpoint)
+- What was built:
+  - `AgentPolicy` in `backend/app/core/policy.py` mapping model verdicts and step risks to actions (`ADVANCE`, `WAIT`, `WARN`, `RECHECK`, `ASK_USER`, `STOP`) with cooldown suppression.
+  - `AgentLoop` in `backend/app/core/agent.py` executing the OBSERVE -> VERIFY -> DECIDE -> ACT loop:
+    - SHA-256 frame deduplication (cached returns with 0 model calls).
+    - Pillow image normalization (max 1024px width, JPEG q80).
+    - Optional SAM element detection with graceful fallback.
+    - Model verification with SpendLimitReached budget handling and 1-retry RECHECK.
+    - Full decision trace persistence (`session.trace`).
+  - REST endpoints in `backend/app/api/frames.py`:
+    - `POST /api/session/{id}/frame` (validates content-type, enforces 1.5MB limit, returns `StepUpdate`).
+    - `GET /api/session/{id}/trace` (returns structured trace).
+  - CLI frame sender in `scripts/send_frame.py`.
+  - 12 comprehensive unit tests in `backend/tests/test_agent_loop.py`.
+- Key files: backend/app/core/policy.py, backend/app/core/agent.py, backend/app/api/frames.py, backend/app/main.py, scripts/send_frame.py, backend/tests/test_agent_loop.py, docs/BUILD_LOG.md
+- Commit: pending

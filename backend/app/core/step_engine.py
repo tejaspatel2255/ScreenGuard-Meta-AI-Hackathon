@@ -76,9 +76,9 @@ class StepEngine:
             return False
         return True
 
-    def record_warning(self, step_id: str, kind: str) -> None:
+    def record_warning(self, step_id: str, kind: str, ts: Optional[float] = None) -> None:
         key = f"{step_id}:{kind}"
-        self.last_warnings[key] = self.clock()
+        self.last_warnings[key] = ts if ts is not None else self.clock()
 
     def apply_verdict(self, verdict: VerdictResult) -> List[Event]:
         """Updates engine state based on model verdict and returns produced events."""
@@ -145,9 +145,6 @@ class StepEngine:
 
         elif verdict.status == "wrong":
             self.states[cur.id] = "wrong"
-            warn_allowed = self.can_warn(cur.id, "wrong")
-            if warn_allowed:
-                self.record_warning(cur.id, "wrong")
             evt = Event(
                 ts=now,
                 step_id=cur.id,
