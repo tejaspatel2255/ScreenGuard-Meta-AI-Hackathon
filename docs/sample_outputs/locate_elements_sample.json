@@ -1,0 +1,25 @@
+{
+  "elements": [
+    {
+      "label": "New Refund button",
+      "box_2d": [
+        0.1,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "confidence": 0.92
+    },
+    {
+      "label": "Order ID field",
+      "box_2d": [
+        0.2,
+        0.2,
+        0.30000000000000004,
+        0.5
+      ],
+      "confidence": 0.92
+    }
+  ],
+  "source": "mock"
+}

@@ -29,3 +29,11 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
 - Key files: backend/app/main.py, backend/app/core/config.py, backend/tests/test_health.py, frontend/src/App.tsx, frontend/src/App.test.ts, config/pricing.json, demo_target/index.html
 - Commit: fb8943263d62f46f887da6cf49b32534f278e6fa
 - Notes: No external APIs called. Backend pytest passes, frontend builds and vitest passes.
+
+### 2026-11-03, Phase 1: Model adapter layer
+
+- Date and time (IST and ET): 2026-11-03 10:45 IST / 2026-11-03 01:15 ET
+- Phase: Phase 1 (Model adapter layer)
+- What was built: Model adapter layer with abstract ModelClient (`parse_procedure`, `judge_frame`, `locate_elements`, `transcribe_audio`, `generate_export`), deterministic `MockModelClient`, `MetaModelClient` adhering to `dev.meta.ai` documentation with exponential backoff on 429/5xx, call counters, per-minute limiter, per-session cap, on-disk hashing cache, `SpendGuard` tracking estimated spend with `SpendLimitReached` hard-stop, provider factory (`MODE=mock` / `MODE=real` and `PROVIDER=baseten`), smoke test script, and mock HTTP unit tests.
+- Key files: backend/app/model_clients/base.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/baseten_client.py, backend/app/model_clients/spend_guard.py, backend/app/model_clients/factory.py, scripts/smoke_test.py, backend/tests/test_model_clients.py, config/pricing.json, docs/meta_api_notes.md
+- Notes: Meta Model API specifications filled from official dev.meta.ai docs. Unit tests and smoke test created.

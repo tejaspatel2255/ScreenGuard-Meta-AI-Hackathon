@@ -1,0 +1,11 @@
+{
+  "step_id": "step-1",
+  "status": "done",
+  "observed_step_ids": [
+    "step-1"
+  ],
+  "evidence": "Mock evaluation observed UI fulfilling 'Open the customer refund screen'.",
+  "warning_text": null,
+  "confidence": 0.95,
+  "source": "mock"
+}

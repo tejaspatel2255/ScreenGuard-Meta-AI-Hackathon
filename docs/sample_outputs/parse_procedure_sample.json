@@ -1,0 +1,56 @@
+{
+  "title": "Mock Customer Refund Procedure",
+  "steps": [
+    {
+      "id": "step-1",
+      "order": 1,
+      "instruction": "Open the customer refund screen",
+      "expected_elements": [
+        "Refunds Button",
+        "Customer Search Field"
+      ],
+      "success_condition": "Refund interface is displayed",
+      "forbidden_actions": [
+        "Click Cancel Transaction"
+      ],
+      "depends_on": [],
+      "risk": "low"
+    },
+    {
+      "id": "step-2",
+      "order": 2,
+      "instruction": "Enter the customer order number and verify details",
+      "expected_elements": [
+        "Order ID Input",
+        "Verify Button"
+      ],
+      "success_condition": "Customer order details populated",
+      "forbidden_actions": [
+        "Enter test order ID"
+      ],
+      "depends_on": [
+        "step-1"
+      ],
+      "risk": "low"
+    },
+    {
+      "id": "step-3",
+      "order": 3,
+      "instruction": "Confirm refund amount and authorize payment",
+      "expected_elements": [
+        "Confirm Refund Button",
+        "Manager Authorization Key"
+      ],
+      "success_condition": "Success confirmation modal appears",
+      "forbidden_actions": [
+        "Override safety cap without manager approval"
+      ],
+      "depends_on": [
+        "step-2"
+      ],
+      "risk": "high"
+    }
+  ],
+  "source": "mock",
+  "confidence": 1.0
+}
