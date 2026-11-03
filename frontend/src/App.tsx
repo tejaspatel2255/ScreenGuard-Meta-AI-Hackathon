@@ -1,157 +1,240 @@
-import { useState, useEffect, useCallback } from 'react'
-import './App.css'
-
-interface HealthData {
-  status: string
-  mode: string
-}
+import { useState, useEffect, useCallback, useRef } from "react";
+import "./App.css";
+import {
+  fetchHealth,
+  fetchBudget,
+  startSession,
+  overrideStep,
+  restartSession,
+  fetchTrace,
+} from "./api";
+import type {
+  HealthInfo,
+  ProcedureParseResult,
+  StepState,
+  StepUpdate,
+  TraceEntry,
+} from "./types";
+import { useCapture } from "./hooks/useCapture";
+import { ProcedurePanel } from "./components/ProcedurePanel";
+import { CapturePanel } from "./components/CapturePanel";
+import { Checklist } from "./components/Checklist";
+import { AlertBanner } from "./components/AlertBanner";
+import { DecisionTrace } from "./components/DecisionTrace";
+import { StatsBar } from "./components/StatsBar";
+import { PreviewCanvas } from "./components/PreviewCanvas";
 
 export function App() {
-  const [health, setHealth] = useState<HealthData | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const [latency, setLatency] = useState<number | null>(null)
-  const [lastChecked, setLastChecked] = useState<Date | null>(null)
+  const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [procedure, setProcedure] = useState<ProcedureParseResult | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [states, setStates] = useState<Record<string, StepState>>({});
+  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
+  const [trace, setTrace] = useState<TraceEntry[]>([]);
+  const [latestUpdate, setLatestUpdate] = useState<StepUpdate | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [lastBlobUrl] = useState<string | null>(null);
+  const [appError, setAppError] = useState<string | null>(null);
+  const [budget, setBudget] = useState<{ calls: number; spend: number }>({ calls: 0, spend: 0 });
 
-  const checkHealth = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    const startTime = performance.now()
+  const lastSpokenWarningRef = useRef<string | null>(null);
+
+  // Poll health & budget
+  const loadStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/health')
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`)
-      }
-      const data: HealthData = await res.json()
-      const endTime = performance.now()
-      setLatency(Math.round(endTime - startTime))
-      setHealth(data)
-      setLastChecked(new Date())
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to connect to backend'
-      setError(message)
-      setHealth(null)
-    } finally {
-      setLoading(false)
+      const h = await fetchHealth();
+      setHealth(h);
+      const b = await fetchBudget();
+      setBudget({ calls: b.calls_total, spend: b.estimated_spend_usd });
+    } catch {
+      setHealth(null);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    checkHealth()
-  }, [checkHealth])
+    loadStatus();
+    const interval = setInterval(loadStatus, 4000);
+    return () => clearInterval(interval);
+  }, [loadStatus]);
+
+  // Voice output for warnings
+  const speakWarning = useCallback(
+    (text: string) => {
+      if (!voiceEnabled || !window.speechSynthesis) return;
+      if (lastSpokenWarningRef.current === text) return;
+      lastSpokenWarningRef.current = text;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    },
+    [voiceEnabled]
+  );
+
+  const handleFrameUpdate = useCallback(
+    (update: StepUpdate) => {
+      setLatestUpdate(update);
+      setBannerDismissed(false);
+      setStates(update.states);
+      setCurrentStepId(update.current_step_id);
+
+      if (update.warning) {
+        speakWarning(update.warning);
+      }
+
+      // Refresh trace
+      if (sessionId) {
+        fetchTrace(sessionId).then(setTrace).catch(console.error);
+      }
+    },
+    [sessionId, speakWarning]
+  );
+
+  const handleCaptureError = useCallback((err: string) => {
+    setAppError(err);
+  }, []);
+
+  const { isSharing, startCapture, stopCapture, checkNow, stats } = useCapture({
+    sessionId,
+    onUpdate: handleFrameUpdate,
+    onError: handleCaptureError,
+  });
+
+  const handleStartSession = async () => {
+    if (!procedure) return;
+    try {
+      setAppError(null);
+      const res = await startSession(procedure);
+      setSessionId(res.session_id);
+      setStates(res.states);
+      setCurrentStepId(res.current_step_id);
+      setTrace([]);
+      setLatestUpdate(null);
+    } catch (err: unknown) {
+      setAppError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleOverride = async (stepId: string, state: StepState) => {
+    if (!sessionId) return;
+    try {
+      const res = await overrideStep(sessionId, stepId, state);
+      setStates(res.states);
+      setCurrentStepId(res.current_step_id);
+      setBannerDismissed(true);
+    } catch (err: unknown) {
+      setAppError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleRestart = async () => {
+    if (!sessionId) return;
+    try {
+      const res = await restartSession(sessionId);
+      setStates(res.states);
+      setCurrentStepId(res.current_step_id);
+      setLatestUpdate(null);
+      setTrace([]);
+      setBannerDismissed(true);
+    } catch (err: unknown) {
+      setAppError(err instanceof Error ? err.message : String(err));
+    }
+  };
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="badge-pill">Meta AI Hackathon • Indie Track</div>
-        <h1 className="title">
-          Screen<span className="accent">Guard</span>
-        </h1>
-        <p className="subtitle">
-          Real-Time Multimodal AI Supervisor Agent for High-Stakes Business Workflows
-        </p>
+    <div className="screenguard-app">
+      {/* Header */}
+      <header className="app-topbar">
+        <div className="brand-group">
+          <h1>
+            Screen<span className="accent">Guard</span>
+          </h1>
+          <span className="tagline">AI Supervisor Agent for Enterprise Procedures</span>
+        </div>
+
+        <div className="header-badges">
+          <div className="badge-item">
+            <span
+              className={`status-dot ${health?.status === "ok" ? "dot-online" : "dot-offline"}`}
+            />
+            <span>{health ? `Backend ${health.status.toUpperCase()} (${health.mode})` : "Backend Offline"}</span>
+          </div>
+          {sessionId && <div className="badge-item session-tag">Session: {sessionId}</div>}
+        </div>
       </header>
 
-      <main className="main-content">
-        <section className="card health-card">
-          <div className="card-header">
-            <div className="card-title-group">
-              <span className={`status-indicator ${loading ? 'pending' : health?.status === 'ok' ? 'online' : 'offline'}`} />
-              <h2>Backend Health Diagnostic</h2>
-            </div>
-            <button 
-              className="refresh-btn" 
-              onClick={checkHealth} 
-              disabled={loading}
-              title="Query /api/health"
-            >
-              {loading ? 'Probing...' : 'Check Health'}
-            </button>
-          </div>
+      {/* Global Error Banner */}
+      {appError && (
+        <div className="app-error-banner">
+          <span>{appError}</span>
+          <button onClick={() => setAppError(null)}>Dismiss</button>
+        </div>
+      )}
 
-          <div className="card-body">
-            {loading && (
-              <div className="state-box loading">
-                <div className="spinner" />
-                <span>Querying <code>/api/health</code>...</span>
-              </div>
-            )}
+      {/* Stats Bar */}
+      <StatsBar
+        stats={stats}
+        callsTotal={budget.calls}
+        estimatedSpendUsd={budget.spend}
+      />
 
-            {!loading && error && (
-              <div className="state-box error">
-                <div className="error-icon">!</div>
-                <div>
-                  <strong>Backend Connection Failed</strong>
-                  <p>{error}</p>
-                  <small>Make sure the FastAPI server is running at <code>http://127.0.0.1:8000</code>.</small>
-                </div>
-              </div>
-            )}
+      {/* Main Grid: 2 Columns */}
+      <div className="app-grid">
+        {/* Left Column: Procedure & Checklist */}
+        <div className="col-left">
+          <ProcedurePanel
+            procedure={procedure}
+            onProcedureParsed={setProcedure}
+            onStartSession={handleStartSession}
+            isSessionActive={!!sessionId}
+            isLoading={false}
+          />
 
-            {!loading && health && (
-              <div className="health-details">
-                <div className="metrics-grid">
-                  <div className="metric-box">
-                    <span className="metric-label">STATUS</span>
-                    <span className="metric-value status-badge">{health.status.toUpperCase()}</span>
-                  </div>
-                  <div className="metric-box">
-                    <span className="metric-label">RUNTIME MODE</span>
-                    <span className="metric-value mode-badge">{health.mode.toUpperCase()}</span>
-                  </div>
-                  <div className="metric-box">
-                    <span className="metric-label">LATENCY</span>
-                    <span className="metric-value">{latency !== null ? `${latency} ms` : '—'}</span>
-                  </div>
-                  <div className="metric-box">
-                    <span className="metric-label">LAST CHECKED</span>
-                    <span className="metric-value time-val">
-                      {lastChecked ? lastChecked.toLocaleTimeString() : '—'}
-                    </span>
-                  </div>
-                </div>
+          <CapturePanel
+            isSharing={isSharing}
+            onStartShare={startCapture}
+            onStopShare={stopCapture}
+            onCheckNow={checkNow}
+            isSessionActive={!!sessionId}
+            voiceEnabled={voiceEnabled}
+            onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
+            onRestartSession={handleRestart}
+          />
 
-                <div className="json-preview">
-                  <div className="json-header">Raw Response (<code>/api/health</code>)</div>
-                  <pre>{JSON.stringify(health, null, 2)}</pre>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
+          {procedure && (
+            <Checklist
+              steps={procedure.steps}
+              states={states}
+              currentStepId={currentStepId}
+              onOverride={handleOverride}
+            />
+          )}
+        </div>
 
-        <section className="card info-card">
-          <h3>System Architecture Overview</h3>
-          <div className="pipeline-steps">
-            <div className="step-item">
-              <span className="step-num">01</span>
-              <h4>Observe</h4>
-              <p>Differential screen capture at max 1024px with 32x32 hash change-detection.</p>
-            </div>
-            <div className="step-item">
-              <span className="step-num">02</span>
-              <h4>Verify</h4>
-              <p>Meta Muse Spark reasoning &amp; SAM 3.1 element localization.</p>
-            </div>
-            <div className="step-item">
-              <span className="step-num">03</span>
-              <h4>Decide</h4>
-              <p>Strict deterministic step engine: ADVANCE, WARN, ASK, STOP.</p>
-            </div>
-            <div className="step-item">
-              <span className="step-num">04</span>
-              <h4>Act</h4>
-              <p>Proactive operator warnings to prevent costly skipped or wrong steps.</p>
-            </div>
-          </div>
-        </section>
-      </main>
+        {/* Right Column: Preview, Alerts & Trace */}
+        <div className="col-right">
+          {!bannerDismissed && latestUpdate && (
+            <AlertBanner
+              action={latestUpdate.action}
+              warningText={latestUpdate.warning || null}
+              reasonText={latestUpdate.reason}
+              currentStepId={currentStepId}
+              onDismiss={() => setBannerDismissed(true)}
+              onConfirmDone={() => currentStepId && handleOverride(currentStepId, "done")}
+              onNotDone={() => setBannerDismissed(true)}
+            />
+          )}
 
-      <footer className="footer">
-        <span>ScreenGuard v0.1.0 • Phase 0 Scaffold Ready</span>
-      </footer>
+          <PreviewCanvas
+            lastBlobUrl={lastBlobUrl}
+            boxes={latestUpdate?.boxes || []}
+          />
+
+          <DecisionTrace trace={trace} />
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -102,3 +102,24 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - 12 comprehensive unit tests in `backend/tests/test_agent_loop.py`.
 - Key files: backend/app/core/policy.py, backend/app/core/agent.py, backend/app/api/frames.py, backend/app/main.py, scripts/send_frame.py, backend/tests/test_agent_loop.py, docs/BUILD_LOG.md
 - Commit: pending
+
+### 2026-11-03, Phase 4 & 6: Screen Capture & Live Interface
+
+- Date and time (IST and ET): 2026-11-03 12:04 IST / 2026-11-03 02:34 ET
+- Phase: Phase 4 & 6 (Merged: Screen capture & Live React frontend)
+- What was built:
+  - TypeScript types mirror (`src/types.ts`) and API client (`src/api.ts`).
+  - `ChangeDetector` (`src/lib/changeDetection.ts`) implementing 32x32 grayscale thumbnail comparison with 800ms stabilization window.
+  - `useCapture` hook (`src/hooks/useCapture.ts`) with `getDisplayMedia`, 700ms downscaling, single in-flight lock, and clean stopping.
+  - Components in `src/components`:
+    - `ProcedurePanel`: procedure editing, demo loading from `/demo-procedure.txt`, parsing, session start.
+    - `CapturePanel`: privacy safeguard notice, start/stop share buttons, check now, speech toggle, restart.
+    - `Checklist`: live step status chips with icons, instructions, high-risk badges, manual override/skip.
+    - `AlertBanner`: dismissible warning for WARN, blocking banner for STOP, confirmation dialog for ASK_USER.
+    - `DecisionTrace`: live scrolling agent trace with action, reason, step, confidence, evidence.
+    - `StatsBar`: frames seen, sent, skipped, model calls, spend, last/median latency.
+    - `PreviewCanvas`: displays the latest frame with normalized visual bounding boxes.
+  - Dark theme layout in `src/App.css` and 2-column reactive dashboard in `src/App.tsx`.
+  - 5 Vitest unit tests in `src/lib/changeDetection.test.ts`.
+- Key files: frontend/src/types.ts, frontend/src/api.ts, frontend/src/lib/changeDetection.ts, frontend/src/hooks/useCapture.ts, frontend/src/components/*, frontend/src/App.tsx, frontend/src/App.css, docs/BUILD_LOG.md
+- Commit: pending
