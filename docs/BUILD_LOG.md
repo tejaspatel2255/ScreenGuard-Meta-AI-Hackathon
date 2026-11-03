@@ -68,3 +68,17 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - 15 comprehensive unit tests in `backend/tests/test_step_engine_and_api.py`.
 - Key files: backend/app/core/step_engine.py, backend/app/core/procedure_parser.py, backend/app/core/session.py, backend/app/api/routes.py, backend/app/main.py, backend/app/core/config.py, backend/tests/test_step_engine_and_api.py, docs/BUILD_LOG.md
 - Commit: pending
+
+### 2026-11-03, Phase 3: Acme Admin Refund Target App
+
+- Date and time (IST and ET): 2026-11-03 11:44 IST / 2026-11-03 02:14 ET
+- Phase: Phase 3 (Acme Admin target app & error catalog)
+- What was built:
+  - 6 distinct screens in `demo_target/app.js` (Login, Orders, Order detail, Refund form, Review, Success).
+  - Ground truth tracking in `window.__state.truth` (`steps_done`, `current_step`, `violations`) with full event logging.
+  - Large legible typography (18px+ body, 20px+ buttons), high contrast, stable IDs and `data-testid` attributes.
+  - Procedure definition at `demo_target/procedures/refund.txt` and `frontend/public/demo-procedure.txt` (10 steps).
+  - Error catalog in `docs/error_catalog.md` defining 5 error types (`skipped_step`, `wrong_order`, `wrong_value`, `wrong_control`, `premature_submit`).
+  - README updated with `python -m http.server 5500 --directory demo_target`.
+- Key files: demo_target/app.js, demo_target/style.css, demo_target/procedures/refund.txt, frontend/public/demo-procedure.txt, docs/error_catalog.md, README.md, docs/BUILD_LOG.md
+- Commit: pending

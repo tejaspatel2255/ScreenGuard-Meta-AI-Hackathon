@@ -53,3 +53,13 @@ npm run dev
 # Build for production
 npm run build
 ```
+
+## Running Acme Admin Demo Target
+
+To serve the Acme Admin demo web application for procedure supervision:
+
+```powershell
+python -m http.server 5500 --directory demo_target
+```
+
+Then open http://localhost:5500 in your browser.

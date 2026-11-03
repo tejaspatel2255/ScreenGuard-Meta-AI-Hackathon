@@ -1,0 +1,12 @@
+Create customer refund for damaged goods
+
+1. Sign in with the demo username and password.
+2. On the Orders page, open order ORD-1002.
+3. Check that the order total is $240.00.
+4. Click Start refund.
+5. Choose the reason Damaged item.
+6. Enter the refund amount 120.00.
+7. Tick Manager approved (required over $100).
+8. Click Review refund.
+9. Check that the reason, amount and approval are correct on the review page.
+10. Click Confirm refund and check the success message.
