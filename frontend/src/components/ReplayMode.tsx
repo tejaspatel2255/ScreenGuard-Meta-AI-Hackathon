@@ -216,6 +216,16 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
         const nextIdx = currentIdxRef.current + 1;
         const run = manifest?.runs.find((r) => r.id === selectedRunId);
         if (!run || !framesRef.current || nextIdx >= framesRef.current.length) {
+          // Check if there is another run to seamlessly proceed to
+          const currentRunIndex = manifest?.runs.findIndex((r) => r.id === selectedRunId) ?? -1;
+          if (manifest && currentRunIndex !== -1 && currentRunIndex < manifest.runs.length - 1) {
+            // Automatically advance to the next run (e.g. from run 1 to run 2)
+            const nextRun = manifest.runs[currentRunIndex + 1];
+            setSelectedRunId(nextRun.id);
+            return;
+          }
+
+          // Otherwise pause at end
           setIsPlaying(false);
           if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -245,7 +255,7 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
     if (isPlaying) {
       stopPlayback();
     } else {
-      if (currentIdx >= frames.length - 1) {
+      if (currentIdxRef.current >= framesRef.current.length - 1) {
         handleRestart();
       }
       setIsPlaying(true);
@@ -254,11 +264,12 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
 
   const handleRestart = () => {
     stopPlayback();
+    currentIdxRef.current = 0;
     setCurrentIdx(0);
     onReset();
     const run = manifest?.runs.find((r) => r.id === selectedRunId);
-    if (run && frames.length > 0) {
-      emitFrame(frames, 0, run);
+    if (run && framesRef.current.length > 0) {
+      emitFrame(framesRef.current, 0, run);
     }
   };
 
