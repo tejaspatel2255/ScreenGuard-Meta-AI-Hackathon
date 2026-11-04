@@ -58,7 +58,13 @@ export const ProcedurePanel: React.FC<ProcedurePanelProps> = ({
         </div>
         <button
           className="btn-secondary-sm"
-          onClick={() => window.open("http://localhost:5500", "_blank")}
+          onClick={() => {
+            // If running on deployed Vercel, open the deployed demo target; otherwise localhost
+            const targetUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+              ? "http://localhost:5500"
+              : "/demo_target/index.html";
+            window.open(targetUrl, "_blank");
+          }}
           title="Opens Acme Admin Target App in a new tab"
         >
           Open Demo App (Acme Admin) ↗
