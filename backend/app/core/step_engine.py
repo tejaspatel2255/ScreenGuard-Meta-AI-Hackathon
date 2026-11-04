@@ -80,6 +80,13 @@ class StepEngine:
         key = f"{step_id}:{kind}"
         self.last_warnings[key] = ts if ts is not None else self.clock()
 
+    def preview(self, verdict: VerdictResult) -> "StepEngine":
+        """Creates an isolated copy of the step engine and applies the verdict to preview the result."""
+        import copy
+        preview_engine = copy.deepcopy(self)
+        preview_engine.apply_verdict(verdict)
+        return preview_engine
+
     def apply_verdict(self, verdict: VerdictResult) -> List[Event]:
         """Updates engine state based on model verdict and returns produced events."""
         now = self.clock()

@@ -74,6 +74,13 @@ body {
   font-weight: 600;
 }
 
+.badge-item.mock-mode-badge {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fde68a;
+  font-weight: 700;
+}
+
 .badge-item.model-provenance-badge {
   background: rgba(56, 189, 248, 0.1);
   border-color: rgba(56, 189, 248, 0.3);

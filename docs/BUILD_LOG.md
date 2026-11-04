@@ -52,7 +52,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Added deterministic fallback parsing to `MockModelClient`.
   - Added `cache/` and `*.zip` to `.gitignore`.
 - Key files: backend/app/model_clients/groq_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/factory.py, backend/app/core/config.py, scripts/smoke_test.py, docs/sample_outputs/
-- Commit: pending
+- Commit: d7faab0
 
 ### 2026-11-03, Phase 2: Parser, Step Engine, Sessions and API
 
@@ -67,7 +67,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - CORS origins configuration added to `config.py` and `.env.example`.
   - 15 comprehensive unit tests in `backend/tests/test_step_engine_and_api.py`.
 - Key files: backend/app/core/step_engine.py, backend/app/core/procedure_parser.py, backend/app/core/session.py, backend/app/api/routes.py, backend/app/main.py, backend/app/core/config.py, backend/tests/test_step_engine_and_api.py, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: 80f6227
 
 ### 2026-11-03, Phase 3: Acme Admin Refund Target App
 
@@ -81,7 +81,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Error catalog in `docs/error_catalog.md` defining 5 error types (`skipped_step`, `wrong_order`, `wrong_value`, `wrong_control`, `premature_submit`).
   - README updated with `python -m http.server 5500 --directory demo_target`.
 - Key files: demo_target/app.js, demo_target/style.css, demo_target/procedures/refund.txt, frontend/public/demo-procedure.txt, docs/error_catalog.md, README.md, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: cb735c9
 
 ### 2026-11-03, Phase 5: Agent Loop and Frame Processing Endpoint
 
@@ -101,7 +101,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - CLI frame sender in `scripts/send_frame.py`.
   - 12 comprehensive unit tests in `backend/tests/test_agent_loop.py`.
 - Key files: backend/app/core/policy.py, backend/app/core/agent.py, backend/app/api/frames.py, backend/app/main.py, scripts/send_frame.py, backend/tests/test_agent_loop.py, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: f8a0165
 
 ### 2026-11-03, Phase 4 & 6: Screen Capture & Live Interface
 
@@ -122,7 +122,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Dark theme layout in `src/App.css` and 2-column reactive dashboard in `src/App.tsx`.
   - 5 Vitest unit tests in `src/lib/changeDetection.test.ts`.
 - Key files: frontend/src/types.ts, frontend/src/api.ts, frontend/src/lib/changeDetection.ts, frontend/src/hooks/useCapture.ts, frontend/src/components/*, frontend/src/App.tsx, frontend/src/App.css, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: 591a7ef
 
 ### 2026-11-03, Phase 7: Mini Evaluation Harness
 
@@ -147,7 +147,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Documented free deployment instructions for Vercel and Netlify in `README.md`.
   - Verified `npm run build` succeeds cleanly in both standard and `VITE_REPLAY_ONLY=true` modes.
 - Key files: frontend/public/replay/manifest.json, frontend/public/demo-procedure.json, frontend/src/components/ReplayMode.tsx, frontend/src/App.tsx, frontend/src/App.css, README.md, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: a0e8862
 
 ### 2026-11-03, Phase 10: Documentation and Submission Pack
 
@@ -160,7 +160,7 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - `docs/X_POST.md` social launch post draft for the $20,000 Most Viral Project bonus.
   - `docs/SUBMISSION_CHECKLIST.md` auditing compliance against hackathon rules (public repo, build period Oct 27 - Nov 4, non-anti-project, open-weights Meta model usage).
 - Key files: README.md, docs/SUBMISSION_SUMMARY.md, docs/DEMO_SCRIPT.md, docs/X_POST.md, docs/SUBMISSION_CHECKLIST.md, docs/BUILD_LOG.md
-- Commit: pending
+- Commit: 73cf11d
 
 ### 2026-11-04, Phase 11: Audit, Correction and Round 2 Remediation
 
@@ -203,4 +203,18 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - Created automated claims audit script `scripts/check_claims.py` and test `backend/tests/test_claims.py` verifying no file makes unsupported claims.
   - Fully tested: 38 backend pytest tests pass (including new `test_claims_audit`), 6 frontend Vitest tests pass, 0 oxlint warnings, frontend build passes.
 - Key files: backend/app/model_clients/base.py, backend/app/model_clients/groq_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/baseten_client.py, backend/app/main.py, backend/tests/test_health.py, backend/tests/test_claims.py, backend/tests/test_agent_loop.py, frontend/src/types.ts, frontend/src/App.tsx, frontend/src/App.css, frontend/src/App.test.ts, frontend/src/components/ReplayMode.tsx, scripts/check_claims.py, docs/BUILD_LOG.md
+- Commit: 95f08be92ce3b680c65181dc2149b6b7a95781fc
+
+### 2026-11-04, Fix 2: Agent Bugs, Safe Defaults and Repo Hygiene
+
+- Date and time (IST and ET): 2026-11-04 11:47 IST / 2026-11-04 02:17 ET
+- Phase: Fix 2 (Agent bugs, safe defaults, and hygiene)
+- What was built / corrected:
+  - **Per-session call cap**: Raised default `MAX_CALLS_PER_SESSION` from 60 to 300 in `config.py`. Tracked in `session.calls_used`. When reached, returns `Action.ASK_USER` with human-readable reason rather than failing or degrading. `POST /api/session/{id}/restart` resets session call counters.
+  - **StatsBar UI**: Added calls used and calls left display (`Calls Left: <N>`) in `StatsBar.tsx`.
+  - **RECHECK Bug & Single-mutation**: Implemented `StepEngine.preview(verdict)` and verified `apply_verdict` is executed exactly once with final verdict. Added two unit tests (`test_agent_recheck` ensuring single event advance and `test_agent_recheck_double_low_confidence` ensuring no advance on double low confidence).
+  - **Safe Defaults**: Verified `MODE="mock"` default, added prominent yellow `⚠️ MOCK MODE` badge in frontend topbar when `mode === "mock"`.
+  - **Error UX**: Transient errors preserve screen sharing rather than halting streaming; clear human error descriptions for 413, 415, 429.
+  - **Hygiene & Verification**: Commit hashes resolved across all BUILD_LOG entries; all 39 pytest tests, oxlint, Vitest, and npm build pass.
+- Key files: backend/app/core/config.py, backend/app/core/agent.py, backend/app/core/step_engine.py, backend/app/api/routes.py, backend/tests/test_agent_loop.py, frontend/src/components/StatsBar.tsx, frontend/src/App.tsx, frontend/src/App.css, frontend/src/hooks/useCapture.ts, docs/BUILD_LOG.md
 - Commit: pending

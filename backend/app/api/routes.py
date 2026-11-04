@@ -106,6 +106,11 @@ async def restart_session_endpoint(session_id: str) -> SessionDetailResponse:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
 
     session.engine.restart()
+    session.calls_used = 0
+    session.trace = []
+    client = get_model_client()
+    if hasattr(client, "reset_session_counter"):
+        client.reset_session_counter()
     return SessionDetailResponse(
         session_id=session.id,
         states=session.engine.states,

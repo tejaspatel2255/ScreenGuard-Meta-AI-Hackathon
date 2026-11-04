@@ -168,15 +168,36 @@ def test_agent_warning_cooldown():
 # 7. Recheck on low confidence done
 def test_agent_recheck():
     # First call low confidence (0.5), second call high confidence (0.88)
+    # Must advance once and emit exactly one advance event
     v1 = VerdictResult(step_id="step-1", status="done", observed_step_ids=["step-1"], evidence="Faint", confidence=0.5, source="mock")
     v2 = VerdictResult(step_id="step-1", status="done", observed_step_ids=["step-1"], evidence="Clear", confidence=0.88, source="mock")
     client = ScriptedFakeClient(verdicts=[v1, v2])
     loop = AgentLoop(client)
     sess = create_test_session()
 
+    initial_events_count = len(sess.engine.events)
     update = asyncio.run(loop.process(sess, create_dummy_png()))
     assert client.call_count == 2
     assert update.action == Action.ADVANCE
+    # Verify exactly one new event was emitted to the engine
+    advance_events = [e for e in sess.engine.events[initial_events_count:] if e.kind == "advance"]
+    assert len(advance_events) == 1
+    assert sess.engine.states["step-1"] == "done"
+
+
+def test_agent_recheck_double_low_confidence():
+    # First call low confidence (0.5), second call also low confidence (0.55)
+    # Must NOT advance
+    v1 = VerdictResult(step_id="step-1", status="done", observed_step_ids=["step-1"], evidence="Faint", confidence=0.5, source="mock")
+    v2 = VerdictResult(step_id="step-1", status="done", observed_step_ids=["step-1"], evidence="Still faint", confidence=0.55, source="mock")
+    client = ScriptedFakeClient(verdicts=[v1, v2])
+    loop = AgentLoop(client)
+    sess = create_test_session()
+
+    update = asyncio.run(loop.process(sess, create_dummy_png()))
+    assert client.call_count == 2
+    assert update.action != Action.ADVANCE
+    assert sess.engine.states["step-1"] != "done"
 
 
 # 8. Budget limit reached handling

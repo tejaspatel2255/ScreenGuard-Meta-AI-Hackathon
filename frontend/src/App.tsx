@@ -239,6 +239,11 @@ export function App() {
                 />
                 <span>{health ? `Backend ${health.status.toUpperCase()} (${health.mode})` : "Backend Offline"}</span>
               </div>
+              {health?.mode === "mock" && (
+                <div className="badge-item mock-mode-badge">
+                  <span>⚠️ MOCK MODE</span>
+                </div>
+              )}
               {health?.model_info && (
                 <div className="badge-item model-provenance-badge">
                   <span>Model: <strong>{health.model_info.vision_model}</strong> via <em>{health.model_info.provider}</em></span>

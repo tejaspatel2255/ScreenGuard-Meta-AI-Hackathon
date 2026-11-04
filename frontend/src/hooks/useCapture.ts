@@ -119,7 +119,8 @@ export function useCapture({ sessionId, onUpdate, onError }: UseCaptureProps) {
             } catch (err: unknown) {
               const msg = err instanceof Error ? err.message : String(err);
               onError(msg);
-              if (msg.includes("413") || msg.includes("415") || msg.includes("429")) {
+              // Fatal protocol errors stop capture, but transient errors keep sharing active
+              if (msg.includes("413") || msg.includes("415")) {
                 stopCapture();
               }
             } finally {

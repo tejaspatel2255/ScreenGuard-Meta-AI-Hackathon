@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     MODE: Literal["mock", "real", "replay"] = "mock"
     USE_SAM: bool = False
     USE_VOICE: bool = False
-    MAX_CALLS_PER_SESSION: int = 60
+    MAX_CALLS_PER_SESSION: int = 300
     MAX_CALLS_PER_MINUTE: int = 20
     MAX_ESTIMATED_SPEND_USD: float = 100.0
     CONFIDENCE_ADVANCE: float = 0.7

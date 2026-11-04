@@ -5,14 +5,17 @@ interface StatsBarProps {
   stats: CaptureStats;
   callsTotal: number;
   estimatedSpendUsd: number;
+  maxCallsPerSession?: number;
 }
 
 export const StatsBar: React.FC<StatsBarProps> = ({
   stats,
   callsTotal,
   estimatedSpendUsd,
+  maxCallsPerSession = 300,
 }) => {
   const lastLatency = stats.latencies.length > 0 ? stats.latencies[stats.latencies.length - 1] : 0;
+  const callsLeft = Math.max(0, maxCallsPerSession - callsTotal);
 
   const medianLatency = () => {
     if (stats.latencies.length === 0) return 0;
@@ -39,8 +42,13 @@ export const StatsBar: React.FC<StatsBarProps> = ({
       </div>
 
       <div className="stat-item">
-        <span className="stat-label">Model Calls</span>
+        <span className="stat-label">Calls Used</span>
         <span className="stat-val">{callsTotal}</span>
+      </div>
+
+      <div className="stat-item">
+        <span className="stat-label">Calls Left</span>
+        <span className="stat-val accent-sent">{callsLeft}</span>
       </div>
 
       <div className="stat-item">
