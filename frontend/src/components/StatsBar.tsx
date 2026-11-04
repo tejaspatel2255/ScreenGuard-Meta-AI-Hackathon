@@ -6,6 +6,9 @@ interface StatsBarProps {
   callsTotal: number;
   estimatedSpendUsd: number;
   maxCallsPerSession?: number;
+  warningsCount?: number;
+  stopsCount?: number;
+  highRiskGuardedCount?: number;
 }
 
 export const StatsBar: React.FC<StatsBarProps> = ({
@@ -13,6 +16,9 @@ export const StatsBar: React.FC<StatsBarProps> = ({
   callsTotal,
   estimatedSpendUsd,
   maxCallsPerSession = 300,
+  warningsCount = 0,
+  stopsCount = 0,
+  highRiskGuardedCount = 0,
 }) => {
   const lastLatency = stats.latencies.length > 0 ? stats.latencies[stats.latencies.length - 1] : 0;
   const callsLeft = Math.max(0, maxCallsPerSession - callsTotal);
@@ -49,6 +55,21 @@ export const StatsBar: React.FC<StatsBarProps> = ({
       <div className="stat-item">
         <span className="stat-label">Calls Left</span>
         <span className="stat-val accent-sent">{callsLeft}</span>
+      </div>
+
+      <div className="stat-item">
+        <span className="stat-label">Warnings</span>
+        <span className="stat-val stat-warning">{warningsCount}</span>
+      </div>
+
+      <div className="stat-item">
+        <span className="stat-label">Stops</span>
+        <span className="stat-val stat-stop">{stopsCount}</span>
+      </div>
+
+      <div className="stat-item">
+        <span className="stat-label">High-Risk Guarded</span>
+        <span className="stat-val stat-guarded">{highRiskGuardedCount}</span>
       </div>
 
       <div className="stat-item">

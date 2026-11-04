@@ -9,15 +9,15 @@
 
 What if an AI supervisor watched your browser tab and caught ERP & billing errors before you submitted? 🛡️
 
-Built for @Meta & @cerebral_valley Hackathon: ScreenGuard! 
+Built for @Meta & @cerebral_valley Hackathon: ScreenGuard!
 
 Works on ANY web tool from pixels alone. 100% error catch rate.
 
 Demo: https://screenguard.vercel.app
 
-#MetaAI #Llama
+#AI #Agent #BuildInPublic
 
-*(Character count: 276 / 280)*
+*(Character count: 279 / 280)*
 
 ---
 

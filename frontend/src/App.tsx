@@ -24,6 +24,8 @@ import { DecisionTrace } from "./components/DecisionTrace";
 import { StatsBar } from "./components/StatsBar";
 import { PreviewCanvas } from "./components/PreviewCanvas";
 import { ReplayMode } from "./components/ReplayMode";
+import { EvaluationTab } from "./components/EvaluationTab";
+import { PreflightPanel } from "./components/PreflightPanel";
 
 const isReplayOnly =
   import.meta.env.VITE_REPLAY_ONLY === "true" ||
@@ -45,6 +47,8 @@ export function App() {
   const [replayImageUrl, setReplayImageUrl] = useState<string | null>(null);
   const [appError, setAppError] = useState<string | null>(null);
   const [budget, setBudget] = useState<{ calls: number; spend: number }>({ calls: 0, spend: 0 });
+  const [showEvalModal, setShowEvalModal] = useState<boolean>(false);
+  const [showPreflightModal, setShowPreflightModal] = useState<boolean>(false);
 
   // Replay mode state
   const [isReplayMode, setIsReplayMode] = useState<boolean>(isReplayOnly);
@@ -210,6 +214,14 @@ export function App() {
     setBudget({ calls: 0, spend: 0 });
   };
 
+  // Mistakes caught counters
+  const warningsCount = trace.filter((t) => t.action === "WARN" || !!t.warning).length;
+  const stopsCount = trace.filter((t) => t.action === "STOP").length;
+  const highRiskGuardedCount = trace.filter((t) => {
+    const step = procedure?.steps.find((s) => s.id === t.step_id);
+    return step?.risk === "high";
+  }).length;
+
   return (
     <div className="screenguard-app">
       {/* Header */}
@@ -222,6 +234,22 @@ export function App() {
         </div>
 
         <div className="header-badges">
+          <button
+            className="btn-header-eval"
+            onClick={() => setShowEvalModal(true)}
+            title="View Real System Evaluation & Benchmarks"
+          >
+            📊 Evaluation
+          </button>
+          {!isReplayOnly && (
+            <button
+              className="btn-header-preflight"
+              onClick={() => setShowPreflightModal(true)}
+              title="Preflight Demo & System Check"
+            >
+              🛫 Preflight
+            </button>
+          )}
           {!isReplayOnly ? (
             <>
               <button
@@ -272,6 +300,9 @@ export function App() {
         stats={isReplayMode ? replayStats : stats}
         callsTotal={budget.calls}
         estimatedSpendUsd={budget.spend}
+        warningsCount={warningsCount}
+        stopsCount={stopsCount}
+        highRiskGuardedCount={highRiskGuardedCount}
       />
 
       {/* Main Grid: 2 Columns */}
@@ -341,9 +372,19 @@ export function App() {
             boxes={latestUpdate?.boxes || []}
           />
 
-          <DecisionTrace trace={trace} />
+          <DecisionTrace
+            trace={trace}
+            procedure={procedure}
+            states={states}
+            health={health}
+            estimatedSpendUsd={budget.spend}
+          />
         </div>
       </div>
+
+      {/* Modals */}
+      {showEvalModal && <EvaluationTab onClose={() => setShowEvalModal(false)} />}
+      {showPreflightModal && <PreflightPanel onClose={() => setShowPreflightModal(false)} />}
     </div>
   );
 }

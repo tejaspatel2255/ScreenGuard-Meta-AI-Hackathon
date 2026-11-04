@@ -218,3 +218,19 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - **Hygiene & Verification**: Commit hashes resolved across all BUILD_LOG entries; all 39 pytest tests, oxlint, Vitest, and npm build pass.
 - Key files: backend/app/core/config.py, backend/app/core/agent.py, backend/app/core/step_engine.py, backend/app/api/routes.py, backend/tests/test_agent_loop.py, frontend/src/components/StatsBar.tsx, frontend/src/App.tsx, frontend/src/App.css, frontend/src/hooks/useCapture.ts, docs/BUILD_LOG.md
 - Commit: pending
+
+
+### 2026-11-04, Phase Next 4: Final Features, Doc Rewrite and Audit
+
+- Date and time (IST and ET): 2026-11-04 12:25 IST / 2026-11-04 02:55 ET
+- Phase: Next 4 (Final Features, Doc Rewrite and Audit)
+- What was built:
+  - Evaluation tab in frontend (`EvaluationTab.tsx`) consuming `/eval/results.json` at build time to surface honest benchmark numbers, 95% Wilson confidence intervals, sample size, failure modes, and Met/Not met statuses inside both live and replay modes.
+  - Preflight panel (`PreflightPanel.tsx`) checking backend health, demo app reachability at port 5500, API budget, and `getDisplayMedia` screen sharing capability with one-click fixes.
+  - Mistakes-caught counter in `StatsBar.tsx` reporting real counts of warnings raised, stops raised, and high-risk steps guarded.
+  - Session report downloads in `DecisionTrace.tsx` enabling one-click download as JSON (`.json`) and Markdown (`.md`) containing procedure, final states, decision trace, and model provenance.
+  - Completely rewritten `README.md`, `docs/SUBMISSION_SUMMARY.md`, `docs/SUBMISSION_CHECKLIST.md`, `docs/DEMO_SCRIPT.md`, and `docs/X_POST.md` aligning with live Groq model execution (`qwen/qwen3.8-27b`), real metrics (including the missed targets), and zero unverified superlatives.
+  - Full audit passing: 39 pytest tests pass, 6 Vitest frontend tests pass, 0 oxlint warnings, production build and replay-only build succeed, secrets scan clean (185 files), and `check_claims.py` clean.
+- Key files: frontend/src/components/EvaluationTab.tsx, frontend/src/components/PreflightPanel.tsx, frontend/src/components/DecisionTrace.tsx, frontend/src/components/StatsBar.tsx, frontend/src/App.tsx, README.md, docs/SUBMISSION_SUMMARY.md, docs/SUBMISSION_CHECKLIST.md, docs/DEMO_SCRIPT.md, docs/X_POST.md
+- Commit: pending
+- Notes: All 10 tasks in Next 4 completed cleanly and verified.
