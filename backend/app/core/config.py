@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     CONFIDENCE_HIGH_RISK: float = 0.85
     WARNING_COOLDOWN_SECONDS: int = 8
     CORS_ORIGINS: List[str] = [
+        "*",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:8000",
