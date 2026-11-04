@@ -73,28 +73,38 @@ export const PreflightPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
       );
     }
 
-    // 2. Demo Target
+    // 2. Demo Target (Checks localhost if running locally, or the bundled app on Vercel)
     try {
-      await fetch("http://localhost:5500", { mode: "no-cors" });
+      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      const targetUrl = isLocal ? "http://localhost:5500" : "/demo_target/index.html";
+      await fetch(targetUrl, { mode: "no-cors" });
       setChecks((prev) =>
         prev.map((c) =>
           c.id === "demo_target"
             ? {
                 ...c,
                 status: "pass",
-                details: "Demo app responsive on port 5500",
+                details: isLocal
+                  ? "Demo app responsive on port 5500"
+                  : "Bundled demo app accessible on Vercel (/demo_target/index.html)",
               }
             : c
         )
       );
     } catch {
+      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
       setChecks((prev) =>
         prev.map((c) =>
           c.id === "demo_target"
             ? {
                 ...c,
                 status: "fail",
-                details: "Could not connect to http://localhost:5500",
+                details: isLocal
+                  ? "Could not connect to http://localhost:5500"
+                  : "Could not load /demo_target/index.html",
+                fix: isLocal
+                  ? "Start target app: python -m http.server 5500 --directory demo_target"
+                  : "Verify /demo_target/index.html exists in public directory",
               }
             : c
         )
