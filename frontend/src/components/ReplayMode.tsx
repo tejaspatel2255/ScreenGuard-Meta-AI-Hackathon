@@ -62,10 +62,15 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentIdxRef = useRef<number>(0);
+  const framesRef = useRef<ReplayFrame[]>([]);
 
   useEffect(() => {
     currentIdxRef.current = currentIdx;
   }, [currentIdx]);
+
+  useEffect(() => {
+    framesRef.current = frames;
+  }, [frames]);
 
   const stopPlayback = useCallback(() => {
     setIsPlaying(false);
@@ -206,24 +211,35 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
   // 3. Playback timer (1 frame per second)
   useEffect(() => {
     if (isPlaying) {
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         const nextIdx = currentIdxRef.current + 1;
         const run = manifest?.runs.find((r) => r.id === selectedRunId);
-        if (!run || !frames || nextIdx >= frames.length) {
+        if (!run || !framesRef.current || nextIdx >= framesRef.current.length) {
           setIsPlaying(false);
-          if (timerRef.current) clearInterval(timerRef.current);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           return;
         }
+        currentIdxRef.current = nextIdx;
         setCurrentIdx(nextIdx);
-        emitFrame(frames, nextIdx, run);
+        emitFrame(framesRef.current, nextIdx, run);
       }, 1000);
     } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [isPlaying, frames, manifest, selectedRunId, emitFrame]);
+  }, [isPlaying, manifest, selectedRunId, emitFrame]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
