@@ -227,10 +227,13 @@ export function App() {
       {/* Header */}
       <header className="app-topbar">
         <div className="brand-group">
-          <h1>
-            Screen<span className="accent">Guard</span>
-          </h1>
-          <span className="tagline">AI Supervisor Agent for Enterprise Procedures</span>
+          <img src="/logo.svg" alt="ScreenGuard Logo" className="app-logo" />
+          <div className="brand-text">
+            <h1>
+              Screen<span className="accent">Guard</span>
+            </h1>
+            <span className="tagline">AI Supervisor Agent for Enterprise Procedures</span>
+          </div>
         </div>
 
         <div className="header-badges">
