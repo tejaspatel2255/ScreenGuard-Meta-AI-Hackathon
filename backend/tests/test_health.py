@@ -12,3 +12,8 @@ def test_health_endpoint() -> None:
     data = response.json()
     assert data["status"] == "ok"
     assert data["mode"] == settings.MODE
+    assert "model_info" in data
+    assert "provider" in data["model_info"]
+    assert "vision_model" in data["model_info"]
+    assert "text_model" in data["model_info"]
+    assert "family" in data["model_info"]

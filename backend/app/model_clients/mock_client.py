@@ -130,3 +130,11 @@ class MockModelClient(ModelClient):
             format_type="markdown",
             source="mock",
         )
+
+    def model_info(self) -> Dict[str, str]:
+        return {
+            "provider": "mock",
+            "vision_model": "mock-vision",
+            "text_model": "mock-text",
+            "family": "mock",
+        }

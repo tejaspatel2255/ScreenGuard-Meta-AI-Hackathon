@@ -96,3 +96,11 @@ class BasetenModelClient(MetaModelClient):
                     confidence=0.0,
                     source="real",
                 )
+
+    def model_info(self) -> Dict[str, str]:
+        return {
+            "provider": "baseten",
+            "vision_model": self.model_name,
+            "text_model": self.model_name,
+            "family": "meta",
+        }

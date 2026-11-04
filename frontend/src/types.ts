@@ -93,7 +93,15 @@ export interface BudgetInfo {
   spend_limit_usd: number;
 }
 
+export interface ModelInfo {
+  provider: string;
+  vision_model: string;
+  text_model: string;
+  family: string;
+}
+
 export interface HealthInfo {
   status: string;
   mode: string;
+  model_info?: ModelInfo;
 }

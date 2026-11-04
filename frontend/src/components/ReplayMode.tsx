@@ -254,7 +254,7 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
       <div className="replay-disclaimer-banner">
         <span className="replay-tag">REPLAY MODE</span>
         <span className="replay-text">
-          Recorded session: benchmark outputs captured on {manifest?.captured_date || "2026-11-03"}. Replay is never presented as live.
+          Recorded session: real outputs of <strong>{manifest?.model || "evaluation model"}</strong> captured on {manifest?.captured_date || "2026-11-03"}. Replay is never presented as live.
         </span>
       </div>
 

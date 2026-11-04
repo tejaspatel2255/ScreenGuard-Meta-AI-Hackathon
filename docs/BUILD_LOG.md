@@ -188,5 +188,19 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - **Frontend Fixes**: Eliminated all 7 React compiler/oxlint warnings, added explicit UI handling for HTTP 413, 415, and 429 status codes, and stopped capture streaming on fatal errors.
   - **Git Hygiene**: Staged removal of starter zip and sample image from git tracking, updated `.gitignore` for `cache/`, `*.zip`, and `sample_screen.png`.
 - Key files: backend/app/core/agent.py, backend/app/core/config.py, backend/app/core/session.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/groq_client.py, eval/run.py, eval/generate_runs.py, frontend/src/components/ReplayMode.tsx, frontend/src/App.tsx, frontend/src/api.ts, frontend/src/hooks/useCapture.ts, README.md, docs/SUBMISSION_CHECKLIST.md, docs/BUILD_LOG.md
-- Commit: pending (to be committed after review)
+- Commit: ad4cdaccb526ba3403d8bf8e7b737fd91796f43e
 - Notes: All 37 backend unit tests pass, frontend builds cleanly with 0 errors and 0 lint warnings.
+
+### 2026-11-04, Fix 1: Model Provenance from Code and Claims Audit
+
+- Date and time (IST and ET): 2026-11-04 11:45 IST / 2026-11-04 02:15 ET
+- Phase: Fix 1 (Model Truth and Code Provenance)
+- What was built / corrected:
+  - Added `model_info()` method returning `{provider, vision_model, text_model, family}` across all clients (`BaseModelClient`, `MetaModelClient`, `GroqModelClient`, `BasetenModelClient`, `MockModelClient`, `ScriptedFakeClient`).
+  - Updated `GET /api/health` to dynamically return `model_info` from the active client, preventing hard-coded claims.
+  - Added dynamic model provenance badge to the frontend topbar header in `App.tsx` and styled in `App.css`, displaying active model and provider directly from API health response.
+  - Updated `ReplayMode.tsx` disclaimer banner to pull model name dynamically from `manifest.json`.
+  - Created automated claims audit script `scripts/check_claims.py` and test `backend/tests/test_claims.py` verifying no file makes unsupported claims.
+  - Fully tested: 38 backend pytest tests pass (including new `test_claims_audit`), 6 frontend Vitest tests pass, 0 oxlint warnings, frontend build passes.
+- Key files: backend/app/model_clients/base.py, backend/app/model_clients/groq_client.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/mock_client.py, backend/app/model_clients/baseten_client.py, backend/app/main.py, backend/tests/test_health.py, backend/tests/test_claims.py, backend/tests/test_agent_loop.py, frontend/src/types.ts, frontend/src/App.tsx, frontend/src/App.css, frontend/src/App.test.ts, frontend/src/components/ReplayMode.tsx, scripts/check_claims.py, docs/BUILD_LOG.md
+- Commit: pending

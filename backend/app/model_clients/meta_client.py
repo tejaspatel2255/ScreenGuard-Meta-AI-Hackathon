@@ -393,3 +393,11 @@ class MetaModelClient(ModelClient):
             "estimated_spend_usd": round(self.spend_guard.total_estimated_spend_usd, 4),
             "spend_limit_usd": self.spend_guard.max_spend_usd,
         }
+
+    def model_info(self) -> Dict[str, str]:
+        return {
+            "provider": "meta",
+            "vision_model": SPARK_MODEL,
+            "text_model": SPARK_MODEL,
+            "family": "meta",
+        }

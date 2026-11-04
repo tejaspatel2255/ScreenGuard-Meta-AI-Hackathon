@@ -66,6 +66,9 @@ class ScriptedFakeClient(ModelClient):
     def usage(self) -> Dict[str, Any]:
         return {"calls_total": self.call_count, "estimated_spend_usd": 0.001, "spend_limit_usd": 100.0}
 
+    def model_info(self) -> Dict[str, str]:
+        return {"provider": "mock", "vision_model": "scripted-vision", "text_model": "scripted-text", "family": "mock"}
+
 
 def create_test_session():
     steps = [

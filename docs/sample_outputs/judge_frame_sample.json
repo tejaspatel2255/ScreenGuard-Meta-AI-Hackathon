@@ -1,9 +1,11 @@
 {
   "step_id": "step-1",
-  "status": "uncertain",
-  "observed_step_ids": [],
-  "evidence": "The screenshot shows a blank interface with a blue header area and a white content area. No UI elements such as buttons, text, or forms are visible. Specifically, the 'New Refund' button is not visible, nor is a refund form.",
+  "status": "done",
+  "observed_step_ids": [
+    "step-1"
+  ],
+  "evidence": "Mock evaluation observed UI fulfilling 'Click the New Refund button.'.",
   "warning_text": null,
-  "confidence": 0.0,
-  "source": "real"
+  "confidence": 0.95,
+  "source": "mock"
 }

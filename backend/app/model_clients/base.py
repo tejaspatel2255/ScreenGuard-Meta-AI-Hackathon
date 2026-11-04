@@ -103,6 +103,11 @@ class ModelClient(ABC):
             "spend_limit_usd": 100.0,
         }
 
+    @abstractmethod
+    def model_info(self) -> Dict[str, str]:
+        """Returns metadata about the active provider and models."""
+        pass
+
     @staticmethod
     def hash_inputs(*args: Any) -> str:
         """Deterministic sha256 hash helper for caching."""

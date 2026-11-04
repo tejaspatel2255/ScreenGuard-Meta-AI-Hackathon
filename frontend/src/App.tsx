@@ -239,6 +239,11 @@ export function App() {
                 />
                 <span>{health ? `Backend ${health.status.toUpperCase()} (${health.mode})` : "Backend Offline"}</span>
               </div>
+              {health?.model_info && (
+                <div className="badge-item model-provenance-badge">
+                  <span>Model: <strong>{health.model_info.vision_model}</strong> via <em>{health.model_info.provider}</em></span>
+                </div>
+              )}
               {sessionId && <div className="badge-item session-tag">Session: {sessionId}</div>}
             </>
           ) : (
