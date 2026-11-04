@@ -60,6 +60,8 @@ class ExportResult(BaseModel):
 class ModelClient(ABC):
     """Abstract interface for all model interactions."""
 
+    cache_enabled: bool = True
+
     @abstractmethod
     async def parse_procedure(self, text: str) -> ProcedureParseResult:
         """Parses written procedure text into structured steps."""

@@ -106,17 +106,23 @@ def test_agent_wait_in_progress():
     assert sess.engine.states["step-1"] == "active"
 
 
-# 3. Warn on low-risk wrong
+# 3. Warn on low-risk wrong (debounced on 2 consecutive wrong verdicts)
 def test_agent_warn_low_risk_wrong():
     verdict = VerdictResult(step_id="step-1", status="wrong", observed_step_ids=["step-1"], evidence="Wrong field", warning_text="Fix username", confidence=0.95, source="mock")
-    client = ScriptedFakeClient(verdicts=[verdict])
+    client = ScriptedFakeClient(verdicts=[verdict, verdict])
     loop = AgentLoop(client)
     sess = create_test_session()
 
-    update = asyncio.run(loop.process(sess, create_dummy_png()))
-    assert update.action == Action.WARN
-    assert update.blocking is False
-    assert "Fix username" in (update.warning or "")
+    # First frame is debounced
+    u1 = asyncio.run(loop.process(sess, create_dummy_png(color=(10, 20, 30))))
+    assert u1.action == Action.WAIT
+    assert "debouncing" in u1.reason.lower()
+
+    # Second consecutive wrong frame triggers WARN
+    u2 = asyncio.run(loop.process(sess, create_dummy_png(color=(40, 50, 60))))
+    assert u2.action == Action.WARN
+    assert u2.blocking is False
+    assert "Fix username" in (u2.warning or "")
 
 
 # 4. Stop on high-risk wrong
@@ -151,15 +157,19 @@ def test_agent_skip_detection():
 # 6. Warning cooldown turns subsequent warning into WAIT
 def test_agent_warning_cooldown():
     verdict = VerdictResult(step_id="step-1", status="wrong", observed_step_ids=["step-1"], evidence="Error", warning_text="Err", confidence=0.9, source="mock")
-    client = ScriptedFakeClient(verdicts=[verdict, verdict])
+    client = ScriptedFakeClient(verdicts=[verdict, verdict, verdict])
     loop = AgentLoop(client)
     sess = create_test_session()
 
-    # First frame -> WARN
+    # Frame 1: debounced
+    u0 = asyncio.run(loop.process(sess, create_dummy_png(color=(0, 1, 2))))
+    assert u0.action == Action.WAIT
+
+    # Frame 2: WARN
     u1 = asyncio.run(loop.process(sess, create_dummy_png(color=(1, 2, 3))))
     assert u1.action == Action.WARN
 
-    # Second frame within 8s -> WAIT (suppressed)
+    # Frame 3: within 8s -> WAIT (suppressed by cooldown)
     u2 = asyncio.run(loop.process(sess, create_dummy_png(color=(4, 5, 6))))
     assert u2.action == Action.WAIT
     assert "cooldown" in u2.reason.lower()

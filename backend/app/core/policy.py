@@ -80,10 +80,32 @@ class AgentPolicy:
         if verdict.status == "wrong":
             warn_msg = verdict.warning_text or "Incorrect action or input observed."
             if step.risk == "high":
+                if verdict.confidence >= 0.8:
+                    return PolicyDecision(
+                        Action.STOP,
+                        f"High-risk violation detected on step '{step.instruction}': {verdict.evidence}",
+                        warn_msg,
+                    )
+                elif not is_recheck:
+                    return PolicyDecision(
+                        Action.RECHECK,
+                        f"Potential high-risk violation with confidence {verdict.confidence:.2f} < 0.80. Requesting recheck.",
+                        None,
+                    )
+                else:
+                    return PolicyDecision(
+                        Action.STOP,
+                        f"High-risk violation confirmed on recheck: {verdict.evidence}",
+                        warn_msg,
+                    )
+
+            # Low-risk step debouncing: requires 2 consecutive wrong verdicts before warning
+            consecutive = engine.consecutive_wrong.get(step.id, 1)
+            if consecutive < 2:
                 return PolicyDecision(
-                    Action.STOP,
-                    f"High-risk violation detected on step '{step.instruction}': {verdict.evidence}",
-                    warn_msg,
+                    Action.WAIT,
+                    f"Initial deviation observed on step '{step.instruction}'. Debouncing pending second frame confirmation.",
+                    None,
                 )
 
             if not engine.can_warn(step.id, "wrong"):

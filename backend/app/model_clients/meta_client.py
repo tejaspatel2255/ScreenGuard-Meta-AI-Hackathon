@@ -101,6 +101,8 @@ class MetaModelClient(ModelClient):
         }
 
     def _get_from_cache(self, key_hash: str) -> Optional[Dict[str, Any]]:
+        if not getattr(self, "cache_enabled", True):
+            return None
         cache_file = self.cache_dir / f"{key_hash}.json"
         if cache_file.exists():
             try:

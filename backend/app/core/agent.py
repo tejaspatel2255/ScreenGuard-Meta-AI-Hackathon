@@ -45,8 +45,9 @@ class StepUpdate(BaseModel):
 class AgentLoop:
     """Core supervisor agent loop: OBSERVE -> VERIFY -> DECIDE -> ACT."""
 
-    def __init__(self, client: ModelClient) -> None:
+    def __init__(self, client: ModelClient, cache_enabled: bool = True) -> None:
         self.client = client
+        self.cache_enabled = cache_enabled
         self._last_frame_hash: Dict[str, str] = {}  # session_id -> hash
         self._last_step_update: Dict[str, StepUpdate] = {}  # session_id -> StepUpdate
 
@@ -80,7 +81,7 @@ class AgentLoop:
         hasher.update(raw_image_bytes)
         frame_hash = hasher.hexdigest()
 
-        if self._last_frame_hash.get(session.id) == frame_hash and session.id in self._last_step_update:
+        if self.cache_enabled and self._last_frame_hash.get(session.id) == frame_hash and session.id in self._last_step_update:
             cached_update = self._last_step_update[session.id].model_copy()
             cached_update.cached = True
             cached_update.calls_used = 0

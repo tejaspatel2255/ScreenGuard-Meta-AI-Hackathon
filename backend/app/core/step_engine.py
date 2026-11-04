@@ -35,6 +35,7 @@ class StepEngine:
         self.step_map: Dict[str, ProcedureStep] = {s.id: s for s in self.steps}
         self.states: Dict[str, StepStateType] = {}
         self.last_warnings: Dict[str, float] = {}  # key: f"{step_id}:{kind}" -> ts
+        self.consecutive_wrong: Dict[str, int] = {}  # step_id -> count of consecutive wrong verdicts
         self.events: List[Event] = []
 
         self._init_states()
@@ -128,6 +129,7 @@ class StepEngine:
         required_conf = self.confidence_high_risk if cur.risk == "high" else self.confidence_advance
 
         if verdict.status == "done" and verdict.confidence >= required_conf:
+            self.consecutive_wrong[cur.id] = 0
             self.states[cur.id] = "done"
             evt = Event(
                 ts=now,
@@ -144,6 +146,7 @@ class StepEngine:
                 self.states[next_step.id] = "active"
 
         elif verdict.status == "in_progress":
+            self.consecutive_wrong[cur.id] = 0
             self.states[cur.id] = "active"
             evt = Event(
                 ts=now,
@@ -155,6 +158,7 @@ class StepEngine:
             self.events.append(evt)
 
         elif verdict.status == "wrong":
+            self.consecutive_wrong[cur.id] = self.consecutive_wrong.get(cur.id, 0) + 1
             self.states[cur.id] = "wrong"
             evt = Event(
                 ts=now,
@@ -209,6 +213,7 @@ class StepEngine:
         """Restarts the procedure."""
         self._init_states()
         self.last_warnings.clear()
+        self.consecutive_wrong.clear()
         now = self.clock()
         evt = Event(
             ts=now,
