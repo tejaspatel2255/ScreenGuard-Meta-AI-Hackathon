@@ -49,9 +49,9 @@
   > *"We evaluated ScreenGuard using an automated Playwright harness across 16 real sessions in MODE=real. Across all five error categories—skipped steps, wrong order, wrong values, wrong controls, and premature submits—ScreenGuard achieved a 100% error detection rate with zero frame delay and a median latency of 24 milliseconds, all for an average spend of less than a quarter of a cent per run."*
 
 #### 2:25 – 2:45 | The Meta Tools & Roles
-- **Visual**: Show the Meta Tools slide or README table highlighting Muse Spark / Meta open-weights models and SAM 3.1.
+- **Visual**: Show the Meta Tools slide or README table highlighting Muse Spark (`muse-spark-1.3`), Meta Llama Vision models, and SAM 3.1.
 - **Voiceover**:
-  > *"ScreenGuard is powered by Meta's open-weights multimodal vision intelligence, serving as the perceptual judge for UI state verification. SOP procedures are structured using Meta language tooling, and UI elements are localized via SAM 3.1. It operates with a strict token budget and a hard $100 spend cap."*
+  > *"ScreenGuard is powered by Meta's multimodal vision intelligence—supporting Meta Model API Muse Spark and Meta Llama open-weights vision architectures—serving as the perceptual judge for UI state verification. SOP procedures are structured using Meta language tooling, with optional UI localization via SAM 3.1. It operates with strict client-side change detection and a hard spend limit."*
 
 #### 2:45 – 3:00 | Close
 - **Visual**: Show the live dashboard with the StatsBar and GitHub repository link.

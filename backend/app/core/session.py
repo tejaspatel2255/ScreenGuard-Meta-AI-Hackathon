@@ -15,6 +15,7 @@ class Session(BaseModel):
     events: List[Event] = Field(default_factory=list)
     trace: List[Dict[str, Any]] = Field(default_factory=list)
     created_at: float = Field(default_factory=time.time)
+    calls_used: int = 0
 
     model_config = {"arbitrary_types_allowed": True}
 

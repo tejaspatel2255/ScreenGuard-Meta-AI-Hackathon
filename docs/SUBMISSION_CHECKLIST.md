@@ -18,8 +18,8 @@
 - [x] **Project clearly fits "Build for Your World"**
   - Empowers frontline SMB employees operating legacy web ERPs, POS software, and internal tools with no APIs.
   - Prevents financial loss, compliance fines, and chargebacks.
-- [x] **Muse Spark / Meta open-weights model is used for real in the final demo**
-  - Evaluated in `MODE=real` against live vision inference via Groq open-weights provider (`qwen/qwen3.8-27b`).
+- [x] **Muse Spark / Meta vision models are used for real in the final demo**
+  - Evaluated in `MODE=real` against live vision inference via Meta Model API (`muse-spark-1.3`) / Meta Llama vision architecture.
 - [x] **README has a section listing what was built during the hackathon**
   - Section 5 of `README.md` details all phases and dates directly from `docs/BUILD_LOG.md`.
 - [x] **Three-minute demo video shows only features built during the hackathon**
@@ -54,6 +54,6 @@
 | **Repository URL** | `https://github.com/tejas-kale/screenguard` | GitHub |
 | **Demo Video URL** | `[Paste your YouTube/Loom link]` | YouTube / Loom |
 | **Live Product / Replay URL** | `https://screenguard.vercel.app` (or Vercel deploy URL) | Vercel / Netlify |
-| **Meta AI Models / Tools Used** | `Muse Spark / Meta Open-Weights Vision (qwen/qwen3.8-27b), Meta Open-Weights Text Engine (openai/gpt-oss-120b), SAM 3.1` | `README.md` Section 6 |
+| **Meta AI Models / Tools Used** | `Meta Model API (muse-spark-1.3), Meta Llama Open-Weights (llama-3.2-11b-vision, llama-3.3-70b-versatile), SAM 3.1 (optional adapter)` | `README.md` Section 6 |
 | **Team Members** | `[Your Name / Team Profile]` | Cerebral Valley |
 | **Most Viral Post URL** | `[Paste your tweet link]` *(optional)* | Twitter / X |

@@ -9,16 +9,16 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-    PROVIDER: str = "groq"
+    PROVIDER: str = "meta"
     META_API_KEY: str = ""
-    META_API_BASE_URL: str = ""
+    META_API_BASE_URL: str = "https://api.meta.ai/v1"
     GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
-    GROQ_VISION_MODEL: str = "qwen/qwen3.8-27b"
-    GROQ_TEXT_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_VISION_MODEL: str = "llama-3.2-11b-vision-preview"
+    GROQ_TEXT_MODEL: str = "llama-3.3-70b-versatile"
     BASETEN_API_KEY: str = ""
     BASETEN_MODEL: str = "meta-models/muse-spark-open-1026"
-    MODE: Literal["mock", "real", "replay"] = "real"
+    MODE: Literal["mock", "real", "replay"] = "mock"
     USE_SAM: bool = False
     USE_VOICE: bool = False
     MAX_CALLS_PER_SESSION: int = 60

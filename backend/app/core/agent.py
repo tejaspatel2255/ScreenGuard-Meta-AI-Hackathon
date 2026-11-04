@@ -1,8 +1,11 @@
 import asyncio
 import hashlib
 import io
+import logging
 import time
 import uuid
+
+logger = logging.getLogger("screenguard.agent")
 from typing import Any, Dict, List, Optional
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -107,6 +110,31 @@ class AgentLoop:
                 events=[],
             )
 
+        # Check per-session call limit
+        if session.calls_used >= settings.MAX_CALLS_PER_SESSION:
+            logger.warning(
+                "Per-session call limit (%d) reached for session %s.",
+                settings.MAX_CALLS_PER_SESSION,
+                session.id,
+            )
+            return StepUpdate(
+                session_id=session.id,
+                frame_id=frame_id,
+                states=session.engine.states,
+                current_step_id=cur_step.id,
+                action=Action.ASK_USER,
+                reason=f"Per-session call limit ({settings.MAX_CALLS_PER_SESSION}) reached for session '{session.id}'.",
+                warning=f"Session call limit ({settings.MAX_CALLS_PER_SESSION}) reached. Please verify remaining steps manually.",
+                blocking=False,
+                boxes=[],
+                verdict=None,
+                calls_used=0,
+                estimated_spend_usd=self.client.usage().get("estimated_spend_usd", 0.0) if hasattr(self.client, "usage") else 0.0,
+                latency_ms=(time.time() - t0) * 1000.0,
+                cached=False,
+                events=[],
+            )
+
         # Context for judge_frame
         completed_ids = [s.id for s in session.engine.steps if session.engine.states.get(s.id) == "done"]
         all_steps_ctx = [
@@ -146,7 +174,7 @@ class AgentLoop:
                 current_step_id=cur_step.id,
                 action=Action.ASK_USER,
                 reason="Budget limit reached. Cannot make more model calls without user approval.",
-                warning="Estimated budget limit reached ($100 max spend).",
+                warning=f"Estimated budget limit reached (${settings.MAX_ESTIMATED_SPEND_USD:.2f} max spend).",
                 blocking=True,
                 boxes=boxes,
                 verdict=None,
@@ -168,22 +196,30 @@ class AgentLoop:
                 source="real",
             )
 
-        # e. Apply verdict to StepEngine and Policy
-        engine_events = session.engine.apply_verdict(verdict)
-        decision = AgentPolicy.decide(verdict, cur_step, engine_events, session.engine, is_recheck=False)
+        # e. Handle optional RECHECK before mutating StepEngine state
+        threshold = settings.CONFIDENCE_HIGH_RISK if cur_step.risk == "high" else settings.CONFIDENCE_ADVANCE
+        needs_recheck = False
+        if verdict.status == "done" and verdict.confidence < threshold:
+            needs_recheck = True
+        elif verdict.status == "uncertain" and cur_step.risk == "high":
+            needs_recheck = True
 
-        # Handle RECHECK: make at most one more call and pick the higher-confidence verdict
-        if decision.action == Action.RECHECK and calls_used < 3:
+        is_recheck = False
+        if needs_recheck and calls_used < 3 and session.calls_used + calls_used < settings.MAX_CALLS_PER_SESSION:
             try:
                 second_verdict = await self.client.judge_frame(normalized_bytes, cur_step, context)
                 calls_used += 1
                 if second_verdict.confidence > verdict.confidence:
                     verdict = second_verdict
-                    engine_events = session.engine.apply_verdict(verdict)
-
-                decision = AgentPolicy.decide(verdict, cur_step, engine_events, session.engine, is_recheck=True)
+                is_recheck = True
             except Exception:
-                pass
+                is_recheck = True
+
+        # Apply chosen verdict to StepEngine and Policy EXACTLY ONCE
+        engine_events = session.engine.apply_verdict(verdict)
+        decision = AgentPolicy.decide(verdict, cur_step, engine_events, session.engine, is_recheck=is_recheck)
+
+        session.calls_used += calls_used
 
         latency_ms = (time.time() - t0) * 1000.0
         spend_now = self.client.usage().get("estimated_spend_usd", 0.0) if hasattr(self.client, "usage") else 0.0

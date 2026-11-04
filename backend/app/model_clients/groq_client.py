@@ -33,7 +33,7 @@ class GroqModelClient(ModelClient):
         cache_dir: Optional[Path] = None,
     ) -> None:
         self.api_key = api_key or settings.GROQ_API_KEY
-        self.base_url = "https://api.groq.com/openai/v1"
+        self.base_url = (settings.GROQ_BASE_URL or "https://api.groq.com/openai/v1").rstrip("/")
         self.spend_guard = spend_guard or SpendGuard(max_spend_usd=settings.MAX_ESTIMATED_SPEND_USD)
         self.cache_dir = cache_dir or (Path(__file__).resolve().parent.parent.parent.parent / "cache" / "model_responses")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -47,10 +47,10 @@ class GroqModelClient(ModelClient):
         self.prompt_parse = parse_p_path.read_text(encoding="utf-8") if parse_p_path.exists() else ""
         self.prompt_judge = judge_p_path.read_text(encoding="utf-8") if judge_p_path.exists() else ""
 
-    async def _enforce_limits(self) -> None:
-        if self.call_count_session >= settings.MAX_CALLS_PER_SESSION:
-            raise RuntimeError(f"MAX_CALLS_PER_SESSION ({settings.MAX_CALLS_PER_SESSION}) reached.")
+    def reset_session_counter(self) -> None:
+        self.call_count_session = 0
 
+    async def _enforce_limits(self) -> None:
         while True:
             now = time.time()
             self.calls_in_current_minute = [t for t in self.calls_in_current_minute if now - t < 60.0]

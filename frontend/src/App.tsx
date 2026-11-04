@@ -72,9 +72,14 @@ export function App() {
 
   useEffect(() => {
     if (isReplayOnly) return;
-    loadStatus();
+    const timer = setTimeout(() => {
+      loadStatus();
+    }, 0);
     const interval = setInterval(loadStatus, 4000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [loadStatus]);
 
   // Voice output for warnings
@@ -244,8 +249,10 @@ export function App() {
 
       {/* Global Error Banner */}
       {appError && (
-        <div className="app-error-banner">
-          <span>{appError}</span>
+        <div className={`app-error-banner ${appError.includes("429") ? "error-banner-budget" : appError.includes("413") ? "error-banner-size" : appError.includes("415") ? "error-banner-media" : ""}`}>
+          <div className="error-banner-text">
+            <strong>{appError.includes("429") ? "LIMIT REACHED" : appError.includes("413") ? "FRAME OVERSIZE" : appError.includes("415") ? "FORMAT ERROR" : "ALERT"}:</strong> {appError}
+          </div>
           <button onClick={() => setAppError(null)}>Dismiss</button>
         </div>
       )}

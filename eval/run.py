@@ -212,7 +212,7 @@ async def run_evaluation():
         warning_frames = [f["frame_idx"] for f in mr.get("frames", []) if f.get("action") in ["WARN", "STOP"]]
 
         if v_frame is not None and warning_frames:
-            # Check if alert fired at or after violation within window
+            # Valid detection requires warning to fire at or after the violation frame within the window
             post_violation_warnings = [w for w in warning_frames if w >= v_frame]
             if post_violation_warnings:
                 first_post_w = post_violation_warnings[0]
@@ -223,13 +223,8 @@ async def run_evaluation():
                     error_breakdown[etype]["detected"] += 1
                 else:
                     detection_delays.append(delay)
-            elif warning_frames[0] < v_frame:
-                # Preemptive detection: alert fired before violation frame (e.g. out-of-order jump)
-                detected_count += 1
-                detection_delays.append(0)
-                error_breakdown[etype]["detected"] += 1
-        elif warning_frames:
-            # Alert fired during the run
+        elif v_frame is None and warning_frames:
+            # Fallback if no specific violation frame was logged
             detected_count += 1
             detection_delays.append(0)
             error_breakdown[etype]["detected"] += 1
@@ -244,15 +239,19 @@ async def run_evaluation():
         total_false_alarms += fa
     false_alarms_per_correct = total_false_alarms / len(correct_runs) if correct_runs else 0.0
 
-    # 3. Step Tracking Accuracy
+    # 3. Step Tracking Accuracy (exact integer step comparison)
     matching_step_frames = 0
     total_correct_frames = 0
     for cr in correct_runs:
         for f in cr["frames"]:
             total_correct_frames += 1
-            if f["truth_step"] and f["agent_step"]:
-                # Check if step numbers align
-                if str(f["truth_step"]) in str(f["agent_step"]):
+            truth_val = f.get("truth_step")
+            agent_val = f.get("agent_step")
+            if truth_val is not None and agent_val is not None:
+                # Extract numeric digits from both (e.g. 1 and 'step-1' -> 1 == 1)
+                t_digits = "".join(ch for ch in str(truth_val) if ch.isdigit())
+                a_digits = "".join(ch for ch in str(agent_val) if ch.isdigit())
+                if t_digits and a_digits and int(t_digits) == int(a_digits):
                     matching_step_frames += 1
 
     step_tracking_acc = (matching_step_frames / total_correct_frames) * 100 if total_correct_frames else 0.0
@@ -261,6 +260,11 @@ async def run_evaluation():
     all_latencies = [f["latency_ms"] for r in eval_results for f in r["frames"]]
     all_latencies.sort()
     median_lat = all_latencies[len(all_latencies) // 2] if all_latencies else 0.0
+
+    # Separate uncached latencies (representing actual model network round-trips)
+    uncached_latencies = [f["latency_ms"] for r in eval_results for f in r["frames"] if not f.get("cached", False) and f.get("latency_ms", 0) > 100]
+    uncached_latencies.sort()
+    median_uncached_lat = uncached_latencies[len(uncached_latencies) // 2] if uncached_latencies else median_lat
 
     total_calls_calculated = sum(sum(f.get("calls_used", 1) for f in r["frames"]) for r in eval_results)
     client_spend = client.usage().get("estimated_spend_usd", 0.0) if hasattr(client, "usage") else 0.0
@@ -306,6 +310,14 @@ async def run_evaluation():
     except Exception as e:
         print(f"Chart generation note: {e}")
 
+    # Dynamic pass/fail evaluation against target benchmarks
+    status_detection = "Pass" if error_detection_rate >= 75.0 else "Needs Improvement"
+    status_accuracy = "Pass" if step_tracking_acc >= 70.0 else "Needs Improvement"
+    status_false_alarms = "Pass" if false_alarms_per_correct <= 1.00 else "Needs Improvement"
+    status_delay = "Pass" if mean_delay <= 2.0 else "Needs Improvement"
+    status_latency = "Pass" if median_lat <= 3000.0 else "Needs Improvement"
+    status_spend = "Pass" if spend_usd < 5.00 else "Needs Improvement"
+
     # Generate REPORT.md
     report_md = f"""# ScreenGuard Evaluation Report
 
@@ -317,16 +329,18 @@ async def run_evaluation():
 
 ## 1. Executive Summary
 
-ScreenGuard observed human execution of a 10-step enterprise refund procedure across automated Playwright browser runs with ground-truth instrumentation (`window.__state.truth`). The evaluation assessed procedural progress tracking, out-of-order execution detection, and policy violation enforcement.
+ScreenGuard observed execution of a 10-step enterprise refund procedure across Playwright browser runs with ground-truth instrumentation (`window.__state.truth`). The evaluation assessed procedural progress tracking, out-of-order execution detection, and policy violation enforcement.
 
 | Metric | Measured Result | Target Benchmark | Status |
 |---|---|---|---|
-| **Error Detection Rate** | **{error_detection_rate:.1f}%** | >= 75.0% | Pass |
-| **Step Tracking Accuracy** | **{step_tracking_acc:.1f}%** | >= 70.0% | Pass |
-| **False Alarms per Correct Run** | **{false_alarms_per_correct:.2f}** | <= 1.00 | Pass |
-| **Mean Detection Delay** | **{mean_delay:.2f} frames** | <= 2.0 frames | Pass |
-| **Median Frame Latency** | **{median_lat:.1f} ms** | <= 3000 ms | Pass |
-| **Total Model Spend** | **${spend_usd:.4f} USD** | < $5.00 USD | Pass |
+| **Error Detection Rate** | **{error_detection_rate:.1f}%** | >= 75.0% | {status_detection} |
+| **Step Tracking Accuracy** | **{step_tracking_acc:.1f}%** | >= 70.0% | {status_accuracy} |
+| **False Alarms per Correct Run** | **{false_alarms_per_correct:.2f}** | <= 1.00 | {status_false_alarms} |
+| **Mean Detection Delay** | **{mean_delay:.2f} frames** | <= 2.0 frames | {status_delay} |
+| **Median Frame Latency (Overall / Live)** | **{median_lat:.1f} ms / {median_uncached_lat:.1f} ms** | <= 3000 ms | {status_latency} |
+| **Total Model Spend** | **${spend_usd:.4f} USD** | < $5.00 USD | {status_spend} |
+
+*Note: Latency includes local response cache hits (<30ms) for repeated frames and live vision model calls (1.5s–2.8s).*
 
 ---
 
@@ -342,11 +356,11 @@ ScreenGuard observed human execution of a 10-step enterprise refund procedure ac
     report_md += f"""
 ---
 
-## 3. Top Observed Limitations & Failures
+## 3. Top Observed Limitations & Real Failure Modes
 
-1. **Transient Form State Lag**: When text fields are populated, rapid typing frames captured before blur events can occasionally yield uncertain classifications until the focus leaves the input.
-2. **Visual Clutter on Small Screens**: Downscaled 1024px frames with tiny checkboxes require explicit contextual prompts emphasizing the Manager Approval control.
-3. **Multi-Step Rapid Jumps**: When multiple UI controls are clicked in under 500ms, frame coalescing marks intermediary steps as skipped simultaneously.
+1. **Intermediate Table Row Selection vs Step Confirmation**: On Step 2 and Step 3, clicking an order row prior to opening order details occasionally produces an active state with low confidence, triggering false alarms (averaging {false_alarms_per_correct:.2f} per correct run).
+2. **Multi-Field Form Input Coalescing**: When an operator fills multiple fields (Reason, Amount, Manager Checkbox) in rapid succession without visual pause, intermediary step transitions can be missed until form review.
+3. **Cache vs Live Latency Disparity**: Frames with minimal visual delta utilize local response hash caching yielding {median_lat:.1f} ms response times, whereas first-seen novel screens require full network inference (~{median_uncached_lat:.1f} ms).
 
 ---
 

@@ -1,11 +1,11 @@
 {
   "captured_date": "2026-11-03",
-  "model": "Meta Muse Spark (open-weights qwen/qwen3.8-27b architecture)",
+  "model": "Meta Model API (muse-spark-1.3) / Meta Llama 3.2 Vision",
   "runs": [
     {
       "id": "correct",
-      "title": "Correct Refund Flow (10 Steps)",
-      "description": "Flawless execution of customer refund ORD-1002 with manager approval verified by Muse Spark.",
+      "title": "Refund Flow Run (10 Steps SOP)",
+      "description": "Recorded execution of customer refund ORD-1002 across all 10 procedural checkpoints.",
       "frame_count": 7,
       "session_file": "/replay/correct/session.json",
       "frame_dir": "/replay/correct"

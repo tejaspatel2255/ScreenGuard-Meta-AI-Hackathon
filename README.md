@@ -28,7 +28,7 @@ ScreenGuard requires **zero backend integration, zero browser extensions, and ze
 
 1. **Ingests written SOPs**: Parses plain-English instructions into stateful milestones with visual verification criteria.
 2. **Observes execution**: Captures a user-selected browser tab and filters out 80% of idle frames using client-side edge change detection.
-3. **Verifies UI state**: Compares screen pixels against procedural rules using Meta open-weights multimodal vision intelligence.
+3. **Verifies UI state**: Compares screen pixels against procedural rules using Meta multimodal vision models (Meta Model API `muse-spark-1.3` or Meta Llama 3.2 Vision).
 4. **Decides & Acts**: A deterministic state machine checks prerequisites, evaluates confidence thresholds, and raises immediate warnings or blocking halts before mistakes become permanent.
 
 ---
@@ -71,7 +71,7 @@ flowchart TD
     B -->|"Stable Changed Frame"| C["Pillow Normalizer (max 1024px width, JPEG q80)"]
     C -->|"SHA-256 Hash"| D{"Frame Cache"}
     D -->|"Duplicate Frame"| E["0 API Calls (Cached Return)"]
-    D -->|"Unique Frame"| F["Meta Vision Model (Muse Spark / Qwen Open-Weights)"]
+    D -->|"Unique Frame"| F["Meta Vision Model (Meta Model API Muse Spark / Meta Llama Vision)"]
     F -->|"Structured JSON Verdict"| G["Pydantic Strict Schema Validation"]
     G --> H["Deterministic StepEngine State Machine"]
     H --> I["Policy Decision Matrix"]
@@ -94,7 +94,7 @@ All product code in this repository was conceived, engineered, and evaluated bet
 | Date | Phase | What Was Built | Key Files |
 |---|---|---|---|
 | **Oct 27** | Phase 0 (Scaffold) | Monorepo layout, FastAPI backend, Vite + React 19 frontend, `/api/health`, pricing config. | `backend/app/main.py`, `frontend/src/App.tsx`, `config/pricing.json` |
-| **Nov 3** | Phase 1 & 1b (Model Layer) | Abstract `ModelClient`, deterministic `MockModelClient`, Groq/Meta open-weights provider (`qwen/qwen3.8-27b`), `SpendGuard` budget hard ceiling ($100 cap), live smoke test. | `backend/app/model_clients/*`, `scripts/smoke_test.py` |
+| **Nov 3** | Phase 1 & 1b (Model Layer) | Abstract `ModelClient`, deterministic `MockModelClient`, Meta Model API adapter (`muse-spark-1.3`), Meta Llama open-weights provider, `SpendGuard` budget hard ceiling ($100 cap), live smoke test. | `backend/app/model_clients/*`, `scripts/smoke_test.py` |
 | **Nov 3** | Phase 2 (Parser & StepEngine) | Deterministic SOP parser, pure-Python `StepEngine` state machine with sequence skip detection and 8s warning cooldown, REST API. | `backend/app/core/step_engine.py`, `procedure_parser.py`, `backend/app/api/routes.py` |
 | **Nov 3** | Phase 3 (Target App) | Acme Admin demo portal (6 screens), `window.__state.truth` ground-truth tracking, 5-error catalog, procedures (`refund.txt`, `onboarding.txt`). | `demo_target/*`, `docs/error_catalog.md` |
 | **Nov 3** | Phase 4 & 6 (Live Capture UI) | React live interface, 32x32 thumbnail change detection, checklist, alert banners, preview canvas, decision trace, stats bar. | `frontend/src/lib/changeDetection.ts`, `frontend/src/hooks/useCapture.ts`, `frontend/src/components/*` |
@@ -109,10 +109,10 @@ All product code in this repository was conceived, engineered, and evaluated bet
 
 | Tool / Model | Role in ScreenGuard | Execution Mode |
 |---|---|---|
-| **Muse Spark / Meta Open Weights** (`qwen/qwen3.8-27b`) | Primary visual supervisor: parses screenshots, verifies UI controls, determines step completion, detects out-of-order execution, and formulates precise warning text. | Real live inference via Groq provider |
-| **Meta Open-Weights Text Engine** (`openai/gpt-oss-120b`) | Ingests plain-English SOP procedures, extracts numbered milestones, identifies high-risk keywords, and formulates visual verification criteria. | Real live inference |
-| **SAM 3.1** (Segment Anything Model) | Bounding box element localization: detects coordinates of named UI controls. | Integrated adapter with graceful fallback |
-| **Muse Voice Transcribe** | Audio transcription of spoken procedures into text. | Documented adapter (not built in crunch plan to preserve spend safety) |
+| **Muse Spark** (`muse-spark-1.3`) / **Meta Llama 3.2 Vision** | Primary visual supervisor: parses screenshots, verifies UI controls, determines step completion, detects out-of-order execution, and formulates precise warning text. | Real live inference (Meta Model API or Meta Llama provider) |
+| **Meta Llama 3.3 Text Engine** (`llama-3.3-70b-versatile`) | Ingests plain-English SOP procedures, extracts numbered milestones, identifies high-risk keywords, and formulates visual verification criteria. | Real live inference |
+| **SAM 3.1** (Segment Anything Model) | Optional bounding box element localization: detects coordinates of named UI controls. Implemented in `MetaModelClient`; disabled by default (`USE_SAM=false`) to optimize frame latency and cost, since Muse Spark directly inspects full 1024px frames. | Optional adapter (`USE_SAM=false` by default) |
+| **Muse Voice Transcribe** | Audio transcription of spoken procedures into text. | Documented adapter (`USE_VOICE=false` to preserve spend safety) |
 
 ---
 

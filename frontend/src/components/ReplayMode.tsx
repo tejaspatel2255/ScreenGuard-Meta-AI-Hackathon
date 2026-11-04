@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { ProcedureParseResult, StepState, StepUpdate, TraceEntry } from "../types";
 import type { CaptureStats } from "../hooks/useCapture";
 
@@ -62,7 +62,90 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentIdxRef = useRef<number>(0);
-  currentIdxRef.current = currentIdx;
+
+  useEffect(() => {
+    currentIdxRef.current = currentIdx;
+  }, [currentIdx]);
+
+  const stopPlayback = useCallback(() => {
+    setIsPlaying(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const emitFrame = useCallback(
+    (allFrames: ReplayFrame[], idx: number, run: ReplayManifest["runs"][0]) => {
+      const f = allFrames[idx];
+      const imageUrl = `${run.frame_dir}/${f.frame}`;
+
+      // Compute cumulative states
+      const states: Record<string, StepState> = {};
+      for (let i = 0; i <= idx; i++) {
+        const step = allFrames[i].agent_step;
+        const action = allFrames[i].action;
+        if (step) {
+          if (action === "ADVANCE") states[step] = "done";
+          else if (action === "WARN" || action === "STOP") states[step] = "wrong";
+          else states[step] = "active";
+        }
+      }
+
+      const pseudoUpdate: StepUpdate = {
+        session_id: `replay-${run.id}`,
+        frame_id: f.frame,
+        states,
+        current_step_id: f.agent_step || null,
+        action: f.action,
+        reason: f.reason,
+        warning: f.warning || null,
+        blocking: f.blocking || false,
+        boxes: [],
+        verdict: null,
+        calls_used: f.calls_used || 1,
+        estimated_spend_usd: (idx + 1) * 0.0003,
+        latency_ms: f.latency_ms || 24,
+        cached: false,
+        events: [],
+      };
+
+      const traceEntry: TraceEntry = {
+        id: `trc-replay-${idx}-${f.frame}`,
+        ts: Date.now() / 1000,
+        action: f.action,
+        reason: f.reason,
+        step_id: f.agent_step || "all",
+        status: f.action === "ADVANCE" ? "done" : f.action === "WARN" ? "wrong" : "in_progress",
+        confidence: f.confidence || 0.95,
+        evidence: f.reason,
+        warning: f.warning || null,
+        calls_used: f.calls_used || 1,
+        latency_ms: f.latency_ms || 24,
+      };
+
+      const latencies = allFrames.slice(0, idx + 1).map((x) => x.latency_ms || 24);
+
+      const stats: CaptureStats = {
+        framesSeen: idx + 1,
+        framesSent: idx + 1,
+        framesSkipped: 0,
+        latencies,
+      };
+
+      onFrameUpdate({
+        imageUrl,
+        update: pseudoUpdate,
+        states,
+        currentStepId: f.agent_step || null,
+        traceEntry,
+        stats,
+        callsTotal: idx + 1,
+        spendUsd: (idx + 1) * 0.0003,
+      });
+    },
+    [onFrameUpdate]
+  );
 
   // 1. Load manifest and demo procedure on mount
   useEffect(() => {
@@ -85,7 +168,7 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
       }
     }
     init();
-  }, []);
+  }, [onProcedureLoaded]);
 
   // 2. Load frames when selectedRunId changes
   useEffect(() => {
@@ -93,12 +176,14 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
     const run = manifest.runs.find((r) => r.id === selectedRunId);
     if (!run) return;
 
+    let isSubscribed = true;
     async function loadRun() {
       try {
         stopPlayback();
         const res = await fetch(run!.session_file);
         if (!res.ok) throw new Error(`Could not load ${run!.session_file}`);
         const data: ReplayFrame[] = await res.json();
+        if (!isSubscribed) return;
         setFrames(data);
         setCurrentIdx(0);
         onReset();
@@ -107,11 +192,16 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
           emitFrame(data, 0, run!);
         }
       } catch (e: any) {
-        setError(`Failed to load replay session: ${e.message}`);
+        if (isSubscribed) {
+          setError(`Failed to load replay session: ${e.message}`);
+        }
       }
     }
     loadRun();
-  }, [manifest, selectedRunId]);
+    return () => {
+      isSubscribed = false;
+    };
+  }, [manifest, selectedRunId, stopPlayback, emitFrame, onReset]);
 
   // 3. Playback timer (1 frame per second)
   useEffect(() => {
@@ -133,91 +223,13 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, frames, manifest, selectedRunId]);
-
-  const stopPlayback = () => {
-    setIsPlaying(false);
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const emitFrame = (allFrames: ReplayFrame[], idx: number, run: ReplayManifest["runs"][0]) => {
-    const f = allFrames[idx];
-    const imageUrl = `${run.frame_dir}/${f.frame}`;
-
-    // Compute cumulative states
-    const states: Record<string, StepState> = {};
-    for (let i = 0; i <= idx; i++) {
-      const step = allFrames[i].agent_step;
-      const action = allFrames[i].action;
-      if (step) {
-        if (action === "ADVANCE") states[step] = "done";
-        else if (action === "WARN" || action === "STOP") states[step] = "wrong";
-        else states[step] = "active";
-      }
-    }
-
-    const pseudoUpdate: StepUpdate = {
-      session_id: `replay-${run.id}`,
-      frame_id: f.frame,
-      states,
-      current_step_id: f.agent_step || null,
-      action: f.action,
-      reason: f.reason,
-      warning: f.warning || null,
-      blocking: f.blocking || false,
-      boxes: [],
-      verdict: null,
-      calls_used: f.calls_used || 1,
-      estimated_spend_usd: (idx + 1) * 0.0003,
-      latency_ms: f.latency_ms || 24,
-      cached: false,
-      events: [],
-    };
-
-    const traceEntry: TraceEntry = {
-      id: `trc-replay-${idx}-${f.frame}`,
-      ts: Date.now() / 1000,
-      action: f.action,
-      reason: f.reason,
-      step_id: f.agent_step || "all",
-      status: f.action === "ADVANCE" ? "done" : f.action === "WARN" ? "wrong" : "in_progress",
-      confidence: f.confidence || 0.95,
-      evidence: f.reason,
-      warning: f.warning || null,
-      calls_used: f.calls_used || 1,
-      latency_ms: f.latency_ms || 24,
-    };
-
-    const latencies = allFrames.slice(0, idx + 1).map((x) => x.latency_ms || 24);
-
-    const stats: CaptureStats = {
-      framesSeen: idx + 1,
-      framesSent: idx + 1,
-      framesSkipped: 0,
-      latencies,
-    };
-
-    onFrameUpdate({
-      imageUrl,
-      update: pseudoUpdate,
-      states,
-      currentStepId: f.agent_step || null,
-      traceEntry,
-      stats,
-      callsTotal: idx + 1,
-      spendUsd: (idx + 1) * 0.0003,
-    });
-  };
+  }, [isPlaying, frames, manifest, selectedRunId, emitFrame]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
       stopPlayback();
     } else {
       if (currentIdx >= frames.length - 1) {
-        // Restart if at end
         handleRestart();
       }
       setIsPlaying(true);
@@ -242,7 +254,7 @@ export const ReplayMode: React.FC<ReplayModeProps> = ({
       <div className="replay-disclaimer-banner">
         <span className="replay-tag">REPLAY MODE</span>
         <span className="replay-text">
-          Recorded session: real Muse Spark outputs captured on {manifest?.captured_date || "2026-11-03"}. Replay is never presented as live.
+          Recorded session: benchmark outputs captured on {manifest?.captured_date || "2026-11-03"}. Replay is never presented as live.
         </span>
       </div>
 

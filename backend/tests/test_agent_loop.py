@@ -239,3 +239,19 @@ def test_api_frame_oversize_image():
     oversize = b"0" * (2 * 1024 * 1024)  # 2 MB
     resp = client.post(f"/api/session/{sid}/frame", content=oversize, headers={"Content-Type": "image/png"})
     assert resp.status_code == 413
+
+
+# 13. Per-session call limit is enforced per session, not globally across sessions
+def test_agent_per_session_call_limit():
+    from backend.app.core.config import settings
+    verdict = VerdictResult(step_id="step-1", status="in_progress", observed_step_ids=["step-1"], evidence="Typing", confidence=0.9, source="mock")
+    client = ScriptedFakeClient(verdicts=[verdict])
+    loop = AgentLoop(client)
+    sess = create_test_session()
+    sess.calls_used = settings.MAX_CALLS_PER_SESSION
+
+    update = asyncio.run(loop.process(sess, create_dummy_png()))
+    assert update.action == Action.ASK_USER
+    assert "Per-session call limit" in update.reason
+    assert client.call_count == 0  # 0 new calls because session already hit cap
+

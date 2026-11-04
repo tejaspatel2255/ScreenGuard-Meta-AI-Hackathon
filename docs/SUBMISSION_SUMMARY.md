@@ -16,7 +16,7 @@ ScreenGuard is an AI supervisor agent that watches a shared browser tab, tracks 
 
 Enterprise staff in retail, finance, logistics, and healthcare spend hours executing standard operating procedures across legacy ERPs, internal portals, and POS software that lack modern APIs or built-in validation guardrails. A single overlooked compliance checkbox or out-of-order submit can trigger costly audit fines, chargebacks, and hours of manual cleanup.
 
-ScreenGuard solves this from pixels alone. By observing a shared browser tab through privacy-preserving client-side change detection, ScreenGuard ingests plain-English standard operating procedures (SOPs) and evaluates screen state transitions using Meta open-weights multimodal vision intelligence (`qwen/qwen3.8-27b` architecture and Muse Spark). 
+ScreenGuard solves this from pixels alone. By observing a shared browser tab through privacy-preserving client-side change detection, ScreenGuard ingests plain-English standard operating procedures (SOPs) and evaluates screen state transitions using Meta multimodal vision intelligence (Meta Model API Muse Spark and Meta Llama Vision architectures). 
 
 Its deterministic `StepEngine` state machine validates procedural preconditions, enforces confidence gates ($\ge 0.70$ standard, $\ge 0.85$ high-risk), detects sequence skipping, and triggers real-time visual alerts and spoken warnings before irreversible actions are committed. 
 

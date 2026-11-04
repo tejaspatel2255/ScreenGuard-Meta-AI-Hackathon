@@ -117,7 +117,11 @@ export function useCapture({ sessionId, onUpdate, onError }: UseCaptureProps) {
               }));
               onUpdate(update);
             } catch (err: unknown) {
-              onError(err instanceof Error ? err.message : String(err));
+              const msg = err instanceof Error ? err.message : String(err);
+              onError(msg);
+              if (msg.includes("413") || msg.includes("415") || msg.includes("429")) {
+                stopCapture();
+              }
             } finally {
               isSendingRef.current = false;
             }
@@ -129,7 +133,7 @@ export function useCapture({ sessionId, onUpdate, onError }: UseCaptureProps) {
         setStats((s) => ({ ...s, framesSkipped: s.framesSkipped + 1 }));
       }
     },
-    [sessionId, onUpdate, onError]
+    [sessionId, onUpdate, onError, stopCapture]
   );
 
   const startCapture = useCallback(async () => {

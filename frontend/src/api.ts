@@ -69,6 +69,15 @@ export async function restartSession(sessionId: string): Promise<SessionDetail> 
   return res.json();
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 export async function sendFrame(sessionId: string, jpegBlob: Blob): Promise<StepUpdate> {
   const res = await fetch(`${API_BASE}/api/session/${sessionId}/frame`, {
     method: "POST",
@@ -76,10 +85,17 @@ export async function sendFrame(sessionId: string, jpegBlob: Blob): Promise<Step
     body: jpegBlob,
   });
   if (!res.ok) {
-    if (res.status === 413) throw new Error("Frame exceeded 1.5 MB limit.");
-    if (res.status === 415) throw new Error("Unsupported media type sent to backend.");
-    if (res.status === 429) throw new Error("Budget limit reached ($100 max spend).");
-    throw new Error(`Frame processing error (${res.status}): ${await res.text()}`);
+    const errorText = await res.text();
+    if (res.status === 413) {
+      throw new ApiError(413, "Frame Payload Too Large (HTTP 413): Screenshot exceeds 1.5 MB limit. Please check screen downscaling.");
+    }
+    if (res.status === 415) {
+      throw new ApiError(415, "Unsupported Media Type (HTTP 415): Frame must be a valid JPEG or PNG image.");
+    }
+    if (res.status === 429) {
+      throw new ApiError(429, `Rate or Budget Limit Reached (HTTP 429): ${errorText || "Maximum session calls or spend limit reached."}`);
+    }
+    throw new ApiError(res.status, `Frame processing error (${res.status}): ${errorText}`);
   }
   return res.json();
 }

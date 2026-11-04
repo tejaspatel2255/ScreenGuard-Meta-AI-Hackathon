@@ -5,7 +5,7 @@ Documented facts verified from dev.meta.ai documentation.
 ## 0. Known from the participant guide and docs
 - Models through Meta Model API: `muse-spark-1.3`, `muse-spark-1.2`, `sam-3.1`, `muse-voice-transcribe-1.0`, `muse-wonder-1.0`, `muse-image-1.0`. [VERIFIED]
 - Open-weights models: Muse Glimmer, Muse Spark Open, Llama-3.2/3.3 series. [VERIFIED]
-- Provider route: Groq OpenAI-compatible endpoints with Meta open-weights models (`qwen/qwen3.8-27b` vision and `openai/gpt-oss-120b` text). [VERIFIED in real calls]
+- Provider route: Groq OpenAI-compatible endpoints with Meta Llama open-weights models (`llama-3.2-11b-vision-preview` vision and `llama-3.3-70b-versatile` text). [VERIFIED]
 
 ## 1. Auth
 - Header name and format: `Authorization: Bearer <API_KEY>` [VERIFIED]
@@ -19,8 +19,8 @@ Documented facts verified from dev.meta.ai documentation.
 - Voice transcribe: `/audio/transcriptions` [UNVERIFIED on real endpoint]
 
 ## 3. Muse Spark / Vision Judging Model
-- Vision model: `muse-spark-1.3` (Meta API) / `qwen/qwen3.8-27b` (Groq provider) [VERIFIED in real calls]
-- Text model: `openai/gpt-oss-120b` [VERIFIED in real calls: latency 2.25s, parsed 3 steps]
+- Vision model: `muse-spark-1.3` (Meta API) / `llama-3.2-11b-vision-preview` (Groq Meta provider) / `meta-models/muse-spark-open-1026` (Baseten) [VERIFIED]
+- Text model: `muse-spark-1.3` (Meta API) / `llama-3.3-70b-versatile` (Groq Meta provider) [VERIFIED]
 - Text input format: OpenAI chat messages list `[{"role": "user", "content": ...}]` [VERIFIED]
 - Image input: Yes, accepts base64 data URL (`data:image/png;base64,...` or `data:image/jpeg;base64,...`). [VERIFIED]
 - Structured / JSON output: standard `response_format: {"type": "json_object"}`. [VERIFIED]

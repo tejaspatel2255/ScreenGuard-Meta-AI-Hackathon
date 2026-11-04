@@ -161,3 +161,32 @@ Purpose: prove what was built during the hackathon (building period Oct 27 to No
   - `docs/SUBMISSION_CHECKLIST.md` auditing compliance against hackathon rules (public repo, build period Oct 27 - Nov 4, non-anti-project, open-weights Meta model usage).
 - Key files: README.md, docs/SUBMISSION_SUMMARY.md, docs/DEMO_SCRIPT.md, docs/X_POST.md, docs/SUBMISSION_CHECKLIST.md, docs/BUILD_LOG.md
 - Commit: pending
+
+### 2026-11-04, Phase 11: Audit, Correction and Round 2 Remediation
+
+- Date and time (IST and ET): 2026-11-04 10:45 IST / 2026-11-04 01:15 ET
+- Phase: Phase 11 (Audit, Correction, and Round 2 Remediation)
+- What was built / corrected:
+  - **Commit Hash Audit**: Recorded actual git commit hashes for all previous phases that previously stated "pending":
+    - Phase 0 (Scaffold): `346c490`
+    - Phase 1 (Model adapter layer): `7423471`
+    - Phase 1b (Real API check & limit handling): `d7faab0`, `5d7ebf9`, `39884f7`
+    - Phase 2 (Parser, step engine, sessions, REST API): `80f6227`
+    - Phase 3 (Acme Admin target app & error catalog): `cb735c9`
+    - Phase 5 (Agent loop, frames endpoint, policy): `f8a0165`
+    - Phase 4 & 6 (Live capture UI & React frontend): `591a7ef`
+    - Phase 7 (Evaluation harness & initial benchmark): `5f69dca`
+    - Phase 9 (Public replay link & ReplayMode): `a0e8862`
+    - Phase 10 (Documentation & submission pack): `73cf11d`
+  - **Model Alignment**: Replaced non-Meta models (`qwen`, `openai`) with official Meta Model API (`muse-spark-1.3`), Baseten (`meta-models/muse-spark-open-1026`), and Groq Meta Llama models (`llama-3.2-11b-vision-preview`, `llama-3.3-70b-versatile`). Corrected all documentation, README, and checklist references.
+  - **SAM 3.1 Role Clarification**: Explicitly clarified SAM 3.1 element localization as an optional capability implemented in `MetaModelClient`, toggled off (`USE_SAM=false`) by default for speed and cost efficiency as Muse Spark operates on full frames.
+  - **Evaluation Reliability**: Fixed `eval/run.py` to evaluate benchmark targets dynamically (eliminating hardcoded "Pass"), prevent false alarms before violation frames from counting as detections, use exact numeric step matching (fixing `"1" in "step-10"` substring bug), distinguish cached vs live latency, and describe real observed limitations.
+  - **Replay Accuracy**: Updated `run_correct_flow` in `eval/generate_runs.py` to capture checkpoints across all 10 procedural steps, and updated `manifest.json` descriptions honestly.
+  - **Session Call Cap**: Transferred `MAX_CALLS_PER_SESSION` enforcement to per-session state (`session.calls_used`) in `AgentLoop`, preventing process-wide silent blocking after 60 calls.
+  - **RECHECK Bug Resolution**: Fixed `agent.py` to evaluate RECHECK before state mutation, applying the verdict to `StepEngine` exactly once per frame.
+  - **Settings & Defaults**: Set `MODE="mock"` default in `config.py` to prevent accidental spend, parameterized `GROQ_BASE_URL` in `GroqModelClient`, and parameterized budget ceiling text in `agent.py`.
+  - **Frontend Fixes**: Eliminated all 7 React compiler/oxlint warnings, added explicit UI handling for HTTP 413, 415, and 429 status codes, and stopped capture streaming on fatal errors.
+  - **Git Hygiene**: Staged removal of starter zip and sample image from git tracking, updated `.gitignore` for `cache/`, `*.zip`, and `sample_screen.png`.
+- Key files: backend/app/core/agent.py, backend/app/core/config.py, backend/app/core/session.py, backend/app/model_clients/meta_client.py, backend/app/model_clients/groq_client.py, eval/run.py, eval/generate_runs.py, frontend/src/components/ReplayMode.tsx, frontend/src/App.tsx, frontend/src/api.ts, frontend/src/hooks/useCapture.ts, README.md, docs/SUBMISSION_CHECKLIST.md, docs/BUILD_LOG.md
+- Commit: pending (to be committed after review)
+- Notes: All 37 backend unit tests pass, frontend builds cleanly with 0 errors and 0 lint warnings.

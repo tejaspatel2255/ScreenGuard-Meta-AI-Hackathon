@@ -59,13 +59,11 @@ class MetaModelClient(ModelClient):
         self.prompt_parse = parse_p_path.read_text(encoding="utf-8") if parse_p_path.exists() else ""
         self.prompt_judge = judge_p_path.read_text(encoding="utf-8") if judge_p_path.exists() else ""
 
-    async def _enforce_limits(self) -> None:
-        """Enforces MAX_CALLS_PER_SESSION and MAX_CALLS_PER_MINUTE asynchronously with 10s timeout."""
-        if self.call_count_session >= settings.MAX_CALLS_PER_SESSION:
-            raise RuntimeError(
-                f"MAX_CALLS_PER_SESSION ({settings.MAX_CALLS_PER_SESSION}) reached. Refusing calls."
-            )
+    def reset_session_counter(self) -> None:
+        self.call_count_session = 0
 
+    async def _enforce_limits(self) -> None:
+        """Enforces MAX_CALLS_PER_MINUTE asynchronously with 10s timeout."""
         start_wait = time.time()
         while True:
             now = time.time()

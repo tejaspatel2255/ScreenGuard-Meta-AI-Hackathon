@@ -55,7 +55,7 @@ def run_correct_flow(page, run_dir: Path, variant_idx: int):
     labels = []
     frame_idx = 1
 
-    # 1. Login
+    # Step 1: Sign in with demo credentials
     page.goto(f"http://127.0.0.1:{PORT}")
     page.wait_for_selector("#btn-signin")
     time.sleep(0.2)
@@ -65,30 +65,40 @@ def run_correct_flow(page, run_dir: Path, variant_idx: int):
     page.click("#btn-signin")
     page.wait_for_selector("#btn-open-ord-1002")
     time.sleep(0.3)
+
+    # Step 2: On Orders page, open order ORD-1002
     capture_frame(page, run_dir, frame_idx, labels)
     frame_idx += 1
 
-    # 2. Open ORD-1002
     page.click("#btn-open-ord-1002")
     page.wait_for_selector("#btn-start-refund")
     time.sleep(0.3)
+
+    # Step 3: Check order total ($240.00) on Order Detail page
     capture_frame(page, run_dir, frame_idx, labels)
     frame_idx += 1
 
-    # 3. Start refund
+    # Step 4: Click Start refund -> refund form displayed
     page.click("#btn-start-refund")
     page.wait_for_selector("#btn-review")
     time.sleep(0.3)
     capture_frame(page, run_dir, frame_idx, labels)
     frame_idx += 1
 
-    # 4. Fill refund form correctly
+    # Step 5: Choose reason 'Damaged item'
     page.select_option("#sel-reason", "Damaged item")
-    time.sleep(0.2)
+    time.sleep(0.3)
+    capture_frame(page, run_dir, frame_idx, labels)
+    frame_idx += 1
+
+    # Step 6: Enter refund amount '120.00'
     page.fill("#inp-amount", "120.00")
-    time.sleep(0.2)
+    time.sleep(0.3)
+    capture_frame(page, run_dir, frame_idx, labels)
+    frame_idx += 1
+
+    # Step 7: Tick Manager approved (required over $100)
     page.check("#chk-manager")
-    time.sleep(0.2)
     notes = [
         "Customer reported minor packaging damage on arrival.",
         "Box torn during delivery transit; item lightly scuffed.",
@@ -100,14 +110,19 @@ def run_correct_flow(page, run_dir: Path, variant_idx: int):
     capture_frame(page, run_dir, frame_idx, labels)
     frame_idx += 1
 
-    # 5. Click Review refund
+    # Step 8: Click Review refund -> navigate to Review page
     page.click("#btn-review")
     page.wait_for_selector("#btn-confirm")
     time.sleep(0.3)
     capture_frame(page, run_dir, frame_idx, labels)
     frame_idx += 1
 
-    # 6. Click Confirm refund
+    # Step 9: Check reason, amount, approval on review page
+    time.sleep(0.2)
+    capture_frame(page, run_dir, frame_idx, labels)
+    frame_idx += 1
+
+    # Step 10: Click Confirm refund and check success message
     page.click("#btn-confirm")
     page.wait_for_selector("#btn-done")
     time.sleep(0.3)
